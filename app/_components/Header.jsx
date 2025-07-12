@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,29 @@ import {
 function Header() {
   const path = usePathname();
   const { user, isSignedIn } = useUser();
+  // Add this to the imports
+  
+  // Inside the Header component, add this state
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Add this useEffect to check if the user is an admin
+  useEffect(() => {
+    if (isSignedIn) {
+      // Check if user has admin role in metadata
+      const checkAdminRole = async () => {
+        const userMetadata = user.publicMetadata;
+        setIsAdmin(userMetadata.role === 'admin');
+      };
+      checkAdminRole();
+    }
+  }, [isSignedIn, user]);
+  
+  // In the dropdown menu, add this item for admin users
+  {isAdmin && (
+    <DropdownMenuItem>
+      <Link href="/dashboard">Admin Dashboard</Link>
+    </DropdownMenuItem>
+  )}
   useEffect(() => {
     console.log(path)
   }, [])

@@ -62,7 +62,7 @@ const Navbar5 = () => {
 
   return (
     <section className="py-4">
-      <div className='p-6  shadow-sm fixed top-0 w-full z-10 bg-white '>
+      <div className='container '>
         <nav className="flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <img
