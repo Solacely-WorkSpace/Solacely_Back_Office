@@ -3,6 +3,7 @@ import React from 'react'
 import Header from './_components/Header'
 import { LoadScript } from '@react-google-maps/api'
 
+
 function Provider({ children }) {
   return (
     <div>
@@ -10,10 +11,12 @@ function Provider({ children }) {
       googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACE_API_KEY}
       libraries={['places']}
       >
-      <Header />
+      {/* <Header /> */}
+      <Nav />
       <div className='mt-[90px]'>
         {children}
       </div>
+      <Footer />
       </LoadScript>
     </div>
   )

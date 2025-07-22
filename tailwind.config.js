@@ -9,6 +9,7 @@ module.exports = {
   ],
   prefix: "",
   theme: {
+	
   	container: {
   		center: true,
   		padding: '2rem',
@@ -23,8 +24,9 @@ module.exports = {
   			ring: 'hsl(var(--ring))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+			txt: '#171717', // Add
   			primary: {
-  				DEFAULT: '#7f57f1',
+  				DEFAULT: '#521282',
   				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {

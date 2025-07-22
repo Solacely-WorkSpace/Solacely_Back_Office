@@ -1,40 +1,67 @@
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import AiPopuop from "../Components/AiPopuop";
+import { HeroIllustration, MetaImage } from '@/assets/images'
 
-import { Button } from "@/components/ui/button";
-
-const Hero34 = () => {
+const Hero = () => {
   return (
-    <section>
-      <div className="container">
-        <div className="grid items-center gap-8 bg-muted-2 lg:grid-cols-2">
-          <div
-            className="flex flex-col items-center p-16 text-center lg:items-start lg:text-left">
-            <p>New Release</p>
-            <h1 className="my-6 text-4xl font-bold text-pretty lg:text-6xl">
-              Welcome to Our Website
+    <section className="landingpage-container px-4 md:px-0 mt-20">
+      <AiPopuop />
+
+      <div className="flex flex-col-reverse md:flex-row justify-between items-start gap-10 mt-10 ">
+        <div className="flex-1 w-full mt-16">
+          <div className="  px-2 font-rob">
+            <h1 className="text-3xl md:text-5xl font-bold md:leading-14">
+              Homes aren't found, they're revealed.
+              <br />
+              AI-Powered Recommendations.
             </h1>
-            <p className="mb-8 max-w-xl text-muted-foreground lg:text-xl">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Elig
-              doloremque mollitia fugiat omnis! Porro facilis quo animi
-              consequatur. Explicabo.
+
+            <p className=" text-sm md:text-lg leading-6 mt-6 max-w-96 ">
+              Find verified rentals, pay in smaller, flexible installments, and enjoy secure, transparent transactions. Earn while you rent — and use it to pay towards your next rent. Solacely makes renting smarter and safer.
             </p>
-            <div
-              className="flex w-full flex-col justify-center gap-2 sm:flex-row lg:justify-start">
-              <Button>
-                Primary
-                <ArrowRight className="size-4" />
-              </Button>
-              <Button variant="outline">Secondary</Button>
+
+            <div className=" flex justify-between md:flex-col gap-8 py-4 mt-6 items-center md:items-start">
+              <Link
+                href="/sign-up"
+                className="btn-primary"
+              >
+                Get Started
+              </Link>
+
+              <article>
+                <h5 className="font-semibold font-rob text-[#9EA0AB] text-sub text-xs mb-1.5 whitespace-nowrap">
+                  OUR ESTEEM PARTNERS
+                </h5>
+                <figure className=" flex items-center">
+                  <Image
+                    src={MetaImage}
+                    width={400}
+                    height={400}
+                    alt="meta"
+                    placeholder="blur"
+                    className="w-16"
+                  />
+                </figure>
+              </article>
             </div>
           </div>
-          <img
-            src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-1.svg"
-            alt="placeholder hero"
-            className="h-full w-full object-cover" />
+        </div>
+
+        <div className="w-full flex-1">
+          <Image
+            src={HeroIllustration}
+            alt="hero illustration"
+            width={2000}
+            height={2000}
+            placeholder="blur"
+            className="w-full"
+          />
+
         </div>
       </div>
     </section>
   );
 };
 
-export { Hero34 };
+export default Hero;
