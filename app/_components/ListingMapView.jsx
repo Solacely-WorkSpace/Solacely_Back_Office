@@ -4,7 +4,7 @@ import Listing from "./Listing";
 import { supabase } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import GoogleMapSection from "./GoogleMapSection";
-import Nav from "../../components/Nav";
+import Nav from "../../components/nav";
 
 function ListingMapView({ type }) {
   const [listing, setListing] = useState([]);
@@ -14,12 +14,12 @@ function ListingMapView({ type }) {
   const [bathCount, setBathCount] = useState(0);
   const [parkingCount, setParkingCount] = useState(0);
   const [homeType, setHomeType] = useState();
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [coordinates, setCoordinates] = useState();
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalListings, setTotalListings] = useState(0);
-  const [searchLocation, setSearchLocation] = useState('');
+  const [searchLocation, setSearchLocation] = useState("");
   const listingsPerPage = 4;
 
   useEffect(() => {
@@ -54,9 +54,9 @@ function ListingMapView({ type }) {
   const handleSearchClick = async () => {
     setHasSearched(true);
     setCurrentPage(1);
-    
+
     const searchTerm = searchedAddress?.value?.structured_formatting?.main_text;
-    setSearchLocation(searchTerm || 'Selected Area');
+    setSearchLocation(searchTerm || "Selected Area");
 
     let query = supabase
       .from("listing")
@@ -87,10 +87,10 @@ function ListingMapView({ type }) {
       query = query.eq("propertyType", homeType);
     }
     // Add price range filtering
-    if (priceRange.min && priceRange.min !== '') {
+    if (priceRange.min && priceRange.min !== "") {
       query = query.gte("regularPrice", parseInt(priceRange.min));
     }
-    if (priceRange.max && priceRange.max !== '') {
+    if (priceRange.max && priceRange.max !== "") {
       query = query.lte("regularPrice", parseInt(priceRange.max));
     }
 
@@ -121,14 +121,17 @@ function ListingMapView({ type }) {
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
       <Nav />
-      
+
       {/* Main content - Responsive layout */}
       <div className="flex flex-col lg:flex-row min-h-screen pt-7 lg:pt-7">
         {/* Map Section - Top on mobile, Left on desktop */}
         <div className="w-full lg:w-1/2 h-64 sm:h-80 lg:h-full order-2 lg:order-1">
-          <GoogleMapSection listing={getCurrentListings()} coordinates={coordinates} />
+          <GoogleMapSection
+            listing={getCurrentListings()}
+            coordinates={coordinates}
+          />
         </div>
-        
+
         {/* Listings Section - Bottom on mobile, Right on desktop */}
         <div className="w-full lg:w-1/2 flex-1 lg:h-full overflow-y-auto bg-white order-1 lg:order-2">
           <Listing
