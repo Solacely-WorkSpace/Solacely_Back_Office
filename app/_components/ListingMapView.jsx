@@ -4,7 +4,7 @@ import Listing from "./Listing";
 import { supabase } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import GoogleMapSection from "./GoogleMapSection";
-import Nav from "../../components/nav";
+import Nav from "@/components/Nav"; // Updated to match Nav.jsx
 
 function ListingMapView({ type }) {
   const [listing, setListing] = useState([]);

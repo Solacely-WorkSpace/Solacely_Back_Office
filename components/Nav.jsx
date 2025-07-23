@@ -1,7 +1,7 @@
 "use client";
-import Dropdown from "./dropdown";
+import Dropdown from "./Dropdown";
 import Image from "next/image";
-import MobileNav from "./mobileNav";
+import MobileNav from "./MobileNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from '@clerk/nextjs';

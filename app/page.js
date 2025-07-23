@@ -1,13 +1,13 @@
 import Image from "next/image";
 import ListingMapView from "./_components/ListingMapView";
-import Hero from "@/components/hero";  // Changed from { Hero }
-import Tour from "@/components/Tour";  // Changed from { Tour }
-import Waiting from "@/components/Waiting";  // Changed from { Waiting }
-import Offer from "@/components/offer";  // Changed from { Offer }
-import Ad from "@/components/ad";  // Changed from { Ad }
-import Cta from "@/components/cta";  // Changed from { Cta }
-import Nav from "@/components/nav";  // Changed from { Nav }
-import Footer from "@/components/footer";  // Changed from { Footer }
+import Hero from "@/components/Hero";     // Updated to match Hero.jsx
+import Tour from "@/components/Tour";
+import Waiting from "@/components/Waiting";
+import Offer from "@/components/Offer";   // Updated to match Offer.jsx
+import Ad from "@/components/Ad";         // Updated to match Ad.jsx
+import Cta from "@/components/Cta";       // Updated to match Cta.jsx
+import Nav from "@/components/Nav";       // Updated to match Nav.jsx
+import Footer from "@/components/Footer"; // Updated to match Footer.jsx
 
 export default function Home() {
   return (

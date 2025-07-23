@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import AiPopuop from "./aiPopuop";
+import AiPopuop from "./AiPopuop"; // Fixed: Changed from "./aiPopuop" to "./AiPopuop"
 import { HeroIllustration, MetaImage } from '@/assets/images'
 
 const Hero = () => {
