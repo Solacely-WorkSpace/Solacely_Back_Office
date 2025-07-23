@@ -12,11 +12,11 @@ function Provider({ children }) {
       libraries={['places']}
       >
       {/* <Header /> */}
-      <Nav />
-      <div className='mt-[90px]'>
+    
+      <div >
         {children}
       </div>
-      <Footer />
+  
       </LoadScript>
     </div>
   )

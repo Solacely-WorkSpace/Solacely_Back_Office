@@ -4,25 +4,24 @@ import Image from "next/image";
 import MobileNav from "./MobileNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useUser } from '@clerk/nextjs';
 import { LogoName } from '@/assets/images'
 import { LogoIcon } from '@/assets/icons'
 
 const Nav = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, isSignedIn } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState('/rent');
 
-  // Check login status on mount and when localStorage changes
+  // Check if user is admin and set appropriate dashboard URL
   useEffect(() => {
-    // Initial check
-    setIsLoggedIn(typeof window !== "undefined" && !!localStorage.getItem("authToken"));
-
-    // Listen for login/logout events from other tabs/windows
-    const handleStorage = () => {
-      setIsLoggedIn(!!localStorage.getItem("authToken"));
-    };
-    window.addEventListener("storage", handleStorage);
-
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+    if (isSignedIn && user) {
+      const userMetadata = user.publicMetadata;
+      const adminStatus = userMetadata.role === 'admin';
+      setIsAdmin(adminStatus);
+      setDashboardUrl(adminStatus ? '/dashboard' : '/rent');
+    }
+  }, [isSignedIn, user]);
 
   return (
     <nav className=" fixed w-full z-50 bg-white top-0 px-4 py-2">
@@ -67,9 +66,9 @@ const Nav = () => {
         <div>
           <MobileNav />
 
-          {isLoggedIn ? (
+          {isSignedIn ? (
             <Link
-              href="/dashboard"
+              href={dashboardUrl}
               className="btn-primary px-6 hidden md:block"
             >
               Dashboard

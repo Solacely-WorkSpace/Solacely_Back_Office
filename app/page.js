@@ -16,7 +16,7 @@ export default function Home() {
       {/* <ListingMapView type='Sell' />
        */} <Hero />
 
-            <main className='w-screen flex flex-col gap-24 mt-20'>
+            <main >
                 <Tour />
                 <Waiting />
                 <Offer />

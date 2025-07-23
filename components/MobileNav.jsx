@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useUser } from '@clerk/nextjs';
 import { HamburgerSVG } from "@/assets/SVGAssets";
 import { ChevronDown } from "lucide-react";
 
@@ -7,23 +9,19 @@ const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, isSignedIn } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState('/rent');
 
+  // Check if user is admin and set appropriate dashboard URL
   useEffect(() => {
-    // Check if user is logged in
-    const checkLoginStatus = () => {
-      const authToken = localStorage.getItem('authToken');
-      setIsLoggedIn(!!authToken);
-    };
-
-    checkLoginStatus();
-    // Add event listener for storage changes
-    window.addEventListener('storage', checkLoginStatus);
-    
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
+    if (isSignedIn && user) {
+      const userMetadata = user.publicMetadata;
+      const adminStatus = userMetadata.role === 'admin';
+      setIsAdmin(adminStatus);
+      setDashboardUrl(adminStatus ? '/dashboard' : '/rent');
+    }
+  }, [isSignedIn, user]);
 
   useEffect(() => {
     if (isOpen) {
@@ -121,9 +119,9 @@ const MobileNav = () => {
                   <Link href="#" className="block text-sm font-medium rounded-md p-2 hover:bg-primary hover:text-white transition-colors">Become a Partner</Link>
                 </li>
                 <li className="py-1">
-                  {isLoggedIn ? (
+                  {isSignedIn ? (
                     <Link 
-                      href="/dashboard" 
+                      href={dashboardUrl} 
                       className="block text-sm font-medium rounded-md p-2 hover:bg-primary hover:text-white transition-colors"
                     >
                       Dashboard

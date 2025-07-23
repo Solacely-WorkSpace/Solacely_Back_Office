@@ -1,9 +1,26 @@
+"use client"
 import Image from "next/image";
 import Link from "next/link";
+import { useUser } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
 import AiPopuop from "../Components/AiPopuop";
 import { HeroIllustration, MetaImage } from '@/assets/images'
 
 const Hero = () => {
+  const { user, isSignedIn } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState('/rent');
+
+  // Check if user is admin and set appropriate dashboard URL
+  useEffect(() => {
+    if (isSignedIn && user) {
+      const userMetadata = user.publicMetadata;
+      const adminStatus = userMetadata.role === 'admin';
+      setIsAdmin(adminStatus);
+      setDashboardUrl(adminStatus ? '/dashboard' : '/rent');
+    }
+  }, [isSignedIn, user]);
+
   return (
     <section className="landingpage-container px-4 md:px-0 mt-20">
       <AiPopuop />
@@ -18,15 +35,15 @@ const Hero = () => {
             </h1>
 
             <p className=" text-sm md:text-lg leading-6 mt-6 max-w-96 ">
-              Find verified rentals, pay in smaller, flexible installments, and enjoy secure, transparent transactions. Earn while you rent — and use it to pay towards your next rent. Solacely makes renting smarter and safer.
+              Find verified rentals, pay in smaller, flexible installments, and enjoy secure, transparent transactions. Earn while you rent — and use it to pay towards your next rent. Solacely makes renting smarter and safer.
             </p>
 
             <div className=" flex justify-between md:flex-col gap-8 py-4 mt-6 items-center md:items-start">
               <Link
-                href="/sign-up"
+                href={isSignedIn ? dashboardUrl : "/sign-up"}
                 className="btn-primary"
               >
-                Get Started
+                {isSignedIn ? "Dashboard" : "Get Started"}
               </Link>
 
               <article>
