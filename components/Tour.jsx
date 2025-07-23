@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
-import TourApartment from "../Components/TourApartment";
-import TourSectionLinks from "../Components/TourSectionLinks";
-import TourCoLivingSpace from "../Components/TourCoLivingSpace";
-import TourPairWithMe from "../Components/TourPairWithMe";
-import TourRealEstate from "../Components/TourRealEstate";
+import TourApartment from "../components/TourApartment";
+import TourSectionLinks from "../components/TourSectionLinks";
+import TourCoLivingSpace from "../components/TourCoLivingSpace";
+import TourPairWithMe from "../components/TourPairWithMe";
+import TourRealEstate from "../components/TourRealEstate";
 
 const Tour = () => {
   const [isActive, setIsActive] = useState(0);
