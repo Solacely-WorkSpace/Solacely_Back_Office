@@ -1,6 +1,5 @@
 import { appstore, facebookLogo, instagramLogo, linkedinLogo, playstore, twitterLogo } from "@/assets/icons";
 import { logoWhite } from "@/assets/images";
-import { LinkedinSVG } from "@/assets/SVGAssets";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
