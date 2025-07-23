@@ -2,7 +2,7 @@ import { authMiddleware, clerkClient } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
 export default authMiddleware({
-  publicRoutes: ['/'],
+  publicRoutes: ['/sign-in', '/sign-up', '/sign-in/(.*)', '/sign-up/(.*)', '/api/webhooks/(.*)', '/rent', '/view-listing/(.*)', '/add-new-listing'],
   async afterAuth(auth, req) {
     // If the user is trying to access admin routes
     if (req.nextUrl.pathname.startsWith('/(admin)') || 
@@ -16,11 +16,30 @@ export default authMiddleware({
       const user = await clerkClient.users.getUser(auth.userId);
       const isAdmin = user.publicMetadata.role === 'admin';
       
-      // If not an admin, redirect to home page
+      // If not an admin, redirect to user dashboard
       if (!isAdmin) {
-        return NextResponse.redirect(new URL('/', req.url));
+        return NextResponse.redirect(new URL('/user/dashboard', req.url));
       }
     }
+    
+    // If the user is trying to access user dashboard routes
+    if (req.nextUrl.pathname.startsWith('/user/dashboard') || 
+        req.nextUrl.pathname.startsWith('/user/wishlist')) {
+      // Check if user is authenticated
+      if (!auth.userId) {
+        return NextResponse.redirect(new URL('/sign-in', req.url));
+      }
+      
+      // Get user metadata to check if they're an admin
+      const user = await clerkClient.users.getUser(auth.userId);
+      const isAdmin = user.publicMetadata.role === 'admin';
+      
+      // If admin, redirect to admin dashboard
+      if (isAdmin) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
+    }
+    
     return NextResponse.next();
   }
 });

@@ -2,21 +2,13 @@
 import React, { useState } from 'react';
 import { useUser, SignOutButton } from '@clerk/nextjs';
 import { 
-  BarChart3, 
-  Building, 
-  Home, 
-  Users, 
-  Settings, 
-  Menu, 
+  ChevronDown,
+  ChevronRight,
   X,
   Bell,
   LogOut,
   User,
-  ChevronDown,
-  ChevronRight,
-  Wallet,
-  MessageSquare,
-  FileText
+  Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,8 +16,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { LogoIcon } from '@/assets/icons';
+
+// Import proper icons and logo
 import { LogoName } from '@/assets/images';
+import { 
+  Dashboard, DashboardSelected,
+  Wallet, WalletSelected,
+  Setting, SettingSelected,
+  Logo,
+  Logout as LogoutIcon
+} from '@/assets/icons';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,12 +49,42 @@ const spaceItems = [
 ];
 
 const sidebarItems = [
-  { name: 'Customers', href: '/dashboard/users', icon: Users },
-  { name: 'Partners', href: '/dashboard/partners', icon: Users },
-  { name: 'Wallet', href: '/dashboard/wallet', icon: Wallet },
-  { name: 'Comments', href: '/dashboard/comments', icon: MessageSquare },
-  { name: 'Account', href: '/dashboard/account', icon: User },
-  { name: 'User Mgt', href: '/dashboard/logs', icon: FileText },
+  { 
+    name: 'Customers', 
+    href: '/dashboard/users', 
+    icon: '/icons/UserDashboard/user.svg',
+    selectedIcon: '/icons/UserDashboard/user.svg'
+  },
+  { 
+    name: 'Partners', 
+    href: '/dashboard/partners', 
+    icon: '/icons/UserDashboard/connect.svg',
+    selectedIcon: '/icons/UserDashboard/connect.svg'
+  },
+  { 
+    name: 'Wallet', 
+    href: '/dashboard/wallet', 
+    icon: Wallet,
+    selectedIcon: WalletSelected
+  },
+  { 
+    name: 'Comments', 
+    href: '/dashboard/comments', 
+    icon: '/icons/UserDashboard/notification.svg',
+    selectedIcon: '/icons/UserDashboard/notification.svg'
+  },
+  { 
+    name: 'Account', 
+    href: '/dashboard/account', 
+    icon: Setting,
+    selectedIcon: SettingSelected
+  },
+  { 
+    name: 'User Mgt', 
+    href: '/dashboard/logs', 
+    icon: '/icons/UserDashboard/security.svg',
+    selectedIcon: '/icons/UserDashboard/security.svg'
+  },
 ];
 
 export default function AdminLayout({ children }) {
@@ -71,10 +102,10 @@ export default function AdminLayout({ children }) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         {/* Logo Section */}
-        <div className="flex items-center justify-center h-20 px-6 border-b">
+        <div className="flex items-center justify-between h-20 px-6 border-b">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src={LogoIcon}
+              src={Logo}
               alt="Solacely Logo"
               width={32}
               height={32}
@@ -91,7 +122,7 @@ export default function AdminLayout({ children }) {
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden ml-auto"
+            className="lg:hidden"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
@@ -104,11 +135,17 @@ export default function AdminLayout({ children }) {
             href="/dashboard"
             className={`flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
               pathname === '/dashboard'
-                ? 'bg-[#521282] text-white'
+                ? 'bg-primary text-white'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <Home className="mr-3 h-5 w-5" />
+            <Image
+              src={pathname === '/dashboard' ? DashboardSelected : Dashboard}
+              alt="Dashboard"
+              width={20}
+              height={20}
+              className="mr-3 w-5 h-5"
+            />
             Dashboard
           </Link>
 
@@ -118,12 +155,18 @@ export default function AdminLayout({ children }) {
               <button
                 className={`flex items-center justify-between w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
                   isSpaceActive
-                    ? 'bg-[#521282]/10 text-[#521282]'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <div className="flex items-center">
-                  <Home className="mr-3 h-5 w-5" />
+                  <Image
+                    src="/icons/UserDashboard/home.png"
+                    alt="Spaces"
+                    width={20}
+                    height={20}
+                    className="mr-3 w-5 h-5"
+                  />
                   Spaces
                 </div>
                 {spacesOpen ? (
@@ -140,7 +183,7 @@ export default function AdminLayout({ children }) {
                   href={item.href}
                   className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
                     pathname === item.href
-                      ? 'bg-[#521282] text-white'
+                      ? 'bg-primary text-white'
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                   }`}
                 >
@@ -152,23 +195,44 @@ export default function AdminLayout({ children }) {
 
           {/* Other Sidebar Items */}
           {sidebarItems.map((item) => {
-            const Icon = item.icon;
             const isActive = pathname === item.href;
+            const iconSrc = isActive ? item.selectedIcon : item.icon;
+            
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-[#521282] text-white'
+                    ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Icon className="mr-3 h-5 w-5" />
+                <Image
+                  src={iconSrc}
+                  alt={item.name}
+                  width={20}
+                  height={20}
+                  className="mr-3 w-5 h-5"
+                />
                 {item.name}
               </Link>
             );
           })}
+          
+          {/* Sign Out Button */}
+          <SignOutButton>
+            <button className="flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+              <Image
+                src={LogoutIcon}
+                alt="Sign Out"
+                width={20}
+                height={20}
+                className="mr-3 w-5 h-5"
+              />
+              Sign Out
+            </button>
+          </SignOutButton>
         </nav>
       </div>
 
@@ -229,7 +293,13 @@ export default function AdminLayout({ children }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/" className="flex items-center">
-                      <Home className="mr-2 h-4 w-4" />
+                      <Image
+                        src="/icons/UserDashboard/home.png"
+                        alt="Home"
+                        width={16}
+                        height={16}
+                        className="mr-2 w-4 h-4"
+                      />
                       <span>Home</span>
                     </Link>
                   </DropdownMenuItem>

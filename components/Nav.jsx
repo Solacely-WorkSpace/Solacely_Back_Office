@@ -11,7 +11,7 @@ import { LogoIcon } from '@/assets/icons'
 const Nav = () => {
   const { user, isSignedIn } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [dashboardUrl, setDashboardUrl] = useState('/rent');
+  const [dashboardUrl, setDashboardUrl] = useState('/user/dashboard');
 
   // Check if user is admin and set appropriate dashboard URL
   useEffect(() => {
@@ -19,7 +19,7 @@ const Nav = () => {
       const userMetadata = user.publicMetadata;
       const adminStatus = userMetadata.role === 'admin';
       setIsAdmin(adminStatus);
-      setDashboardUrl(adminStatus ? '/dashboard' : '/rent');
+      setDashboardUrl(adminStatus ? '/dashboard' : '/user/dashboard');
     }
   }, [isSignedIn, user]);
 
