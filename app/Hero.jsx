@@ -1,23 +1,23 @@
-"use client"
+"use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
-import AiPopuop from "./AiPopuop";
-import { HeroIllustration, MetaImage } from '@/assets/images'
+import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import AiPopuop from "../components/AiPopuop";
+import { HeroIllustration, MetaImage } from "@/assets/images";
 
 const Hero = () => {
   const { user, isSignedIn } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [dashboardUrl, setDashboardUrl] = useState('/user/dashboard');
+  const [dashboardUrl, setDashboardUrl] = useState("/user/dashboard");
 
   // Check if user is admin and set appropriate dashboard URL
   useEffect(() => {
     if (isSignedIn && user) {
       const userMetadata = user.publicMetadata;
-      const adminStatus = userMetadata.role === 'admin';
+      const adminStatus = userMetadata.role === "admin";
       setIsAdmin(adminStatus);
-      setDashboardUrl(adminStatus ? '/dashboard' : '/user/dashboard');
+      setDashboardUrl(adminStatus ? "/dashboard" : "/user/dashboard");
     }
   }, [isSignedIn, user]);
 
@@ -35,7 +35,10 @@ const Hero = () => {
             </h1>
 
             <p className=" text-sm md:text-lg leading-6 mt-6 max-w-96 ">
-              Find verified rentals, pay in smaller, flexible installments, and enjoy secure, transparent transactions. Earn while you rent — and use it to pay towards your next rent. Solacely makes renting smarter and safer.
+              Find verified rentals, pay in smaller, flexible installments, and
+              enjoy secure, transparent transactions. Earn while you rent — and
+              use it to pay towards your next rent. Solacely makes renting
+              smarter and safer.
             </p>
 
             <div className=" flex justify-between md:flex-col gap-8 py-4 mt-6 items-center md:items-start">
@@ -74,7 +77,6 @@ const Hero = () => {
             placeholder="blur"
             className="w-full"
           />
-
         </div>
       </div>
     </section>
