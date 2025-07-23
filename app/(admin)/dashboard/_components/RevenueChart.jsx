@@ -24,7 +24,7 @@ function RevenueChart() {
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Overall Revenue</CardTitle>
         <div className="text-2xl font-bold">₦48,000,574.21</div>
-        <div className="text-sm text-green-600">+20%</div>
+        <div className="text-sm" style={{color: '#3DC5A1'}}>+20%</div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={200}>
@@ -40,7 +40,7 @@ function RevenueChart() {
               formatter={(value) => [`₦${(value/1000).toFixed(0)}K`, 'Revenue']}
               labelStyle={{ color: '#374151' }}
               contentStyle={{ 
-                backgroundColor: '#1F2937', 
+                backgroundColor: '#6b7280', 
                 border: 'none', 
                 borderRadius: '8px',
                 color: 'white'
@@ -49,10 +49,10 @@ function RevenueChart() {
             <Line 
               type="monotone" 
               dataKey="revenue" 
-              stroke="#10B981" 
+              stroke="#3DC5A1" 
               strokeWidth={3}
               dot={false}
-              activeDot={{ r: 6, fill: '#10B981' }}
+              activeDot={{ r: 6, fill: '#3DC5A1' }}
             />
           </LineChart>
         </ResponsiveContainer>

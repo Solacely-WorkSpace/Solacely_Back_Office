@@ -104,16 +104,16 @@ function AdminDashboard() {
           value={stats.totalCustomers.toLocaleString()} 
           subtitle={`${stats.totalCustomers} unique users`}
           change="+2.1% vs last week"
-          icon={<Users className="h-6 w-6 text-blue-500" />} 
+          icon={<Users className="h-6 w-6" style={{color: '#521282'}} />} 
           loading={loading}
-          variant="blue"
+          variant="purple"
         />
         <DashboardStats 
           title="Total Amount" 
           value={`₦${(stats.totalRevenue / 1000000).toFixed(1)}M`}
           subtitle={`₦${stats.totalRevenue.toLocaleString()}`}
           change="+0.8% vs last week"
-          icon={<DollarSign className="h-6 w-6 text-green-500" />} 
+          icon={<DollarSign className="h-6 w-6" style={{color: '#3DC5A1'}} />} 
           loading={loading}
           variant="green"
         />
@@ -122,7 +122,7 @@ function AdminDashboard() {
           value={stats.totalReports.toLocaleString()}
           subtitle="System reports"
           change="+1.2% vs last week"
-          icon={<BarChart className="h-6 w-6 text-purple-500" />} 
+          icon={<BarChart className="h-6 w-6" style={{color: '#521282'}} />} 
           loading={loading}
           variant="purple"
         />
@@ -131,9 +131,9 @@ function AdminDashboard() {
           value={stats.totalListings.toLocaleString()}
           subtitle={`${stats.sellListings} Sell / ${stats.rentListings} Rent`}
           change={`${((stats.sellListings + stats.rentListings) / Math.max(stats.totalListings, 1) * 100).toFixed(1)}% active`}
-          icon={<Building className="h-6 w-6 text-orange-500" />} 
+          icon={<Building className="h-6 w-6" style={{color: '#3DC5A1'}} />} 
           loading={loading}
-          variant="orange"
+          variant="green"
         />
       </div>
       

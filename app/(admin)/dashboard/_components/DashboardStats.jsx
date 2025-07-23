@@ -4,10 +4,8 @@ import { cn } from '@/lib/utils';
 
 function DashboardStats({ title, value, subtitle, change, icon, loading, variant = 'default' }) {
   const variants = {
-    blue: 'bg-blue-50 border-blue-200',
-    green: 'bg-green-50 border-green-200',
     purple: 'bg-purple-50 border-purple-200',
-    orange: 'bg-orange-50 border-orange-200',
+    green: 'bg-green-50 border-green-200',
     default: 'bg-white border-gray-200'
   };
 
@@ -34,7 +32,7 @@ function DashboardStats({ title, value, subtitle, change, icon, loading, variant
             )}
             {change && (
               <div className="text-xs text-gray-500">
-                <span className={change.includes('+') ? 'text-green-600' : 'text-red-600'}>
+                <span className={change.includes('+') ? 'text-[#3DC5A1]' : 'text-red-600'}>
                   {change}
                 </span>
               </div>

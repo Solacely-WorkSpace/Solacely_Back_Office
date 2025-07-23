@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/utils/supabase/client';
 
-const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'];
+const colors = ['#521282', '#3DC5A1', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'];
 
 function PropertyChart() {
   const [data, setData] = useState([]);
@@ -72,7 +72,7 @@ function PropertyChart() {
         const chartData = Object.entries(locationCounts)
           .map(([name, count], index) => ({
             name,
-            value: Math.round((count / total) * 100),
+            value: count,
             count,
             color: colors[index % colors.length]
           }))
@@ -125,7 +125,7 @@ function PropertyChart() {
                 cx="50%"
                 cy="50%"
                 innerRadius={70}
-                outerRadius={85}
+                outerRadius={77}
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -138,7 +138,7 @@ function PropertyChart() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-2xl font-bold">{totalListings.toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Property Listings by Area</div>
+              <div className="text-sm text-gray-500"> Listings by Area</div>
             </div>
           </div>
         </div>

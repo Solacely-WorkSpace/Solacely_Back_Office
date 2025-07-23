@@ -1,13 +1,8 @@
-"use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Eye, 
-  Pencil, 
-  Trash, 
-  MoreHorizontal, 
   MapPin, 
   BedDouble, 
   Bath, 
@@ -18,7 +13,6 @@ import {
   Car,
   Utensils
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -42,21 +36,6 @@ function RecentListings() {
       setListings(data);
     }
     setLoading(false);
-  };
-
-  const handleDeleteListing = async (id) => {
-    if (confirm("Are you sure you want to delete this listing?")) {
-      await supabase.from("listing").delete().eq("id", id);
-      fetchRecentListings();
-    }
-  };
-
-  const toggleListingStatus = async (id, currentStatus) => {
-    await supabase
-      .from("listing")
-      .update({ active: !currentStatus })
-      .eq("id", id);
-    fetchRecentListings();
   };
 
   const getAmenityIcon = (amenity) => {
@@ -89,117 +68,91 @@ function RecentListings() {
         ) : (
           <div className="space-y-6">
             {listings.map((listing) => (
-              <div
+              <Link
                 key={listing.id}
-                className="flex gap-6 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                href={`/dashboard/view-listing/${listing.id}`}
+                className="block"
               >
-                {/* Larger Image */}
-                <div className="relative h-24 w-32 md:h-28 md:w-40 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image
-                    src={
-                      listing?.listingimages?.[0]?.url || "/placeholder.svg"
-                    }
-                    alt={listing.address || 'Property image'}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Location above listing name */}
-                  <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                    <span className="truncate">
-                      {listing.address || 'Location not specified'}
-                    </span>
+                <div className="flex gap-6 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer">
+                  {/* Larger Image */}
+                  <div className="relative h-32 w-48 md:h-36 md:w-56 rounded-lg overflow-hidden flex-shrink-0">
+                    <Image
+                      src={
+                        listing?.listingimages?.[0]?.url || "/placeholder.svg"
+                      }
+                      alt={listing.address || 'Property image'}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   
-                  {/* Listing Name */}
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
-                    {listing.propertyType || 'Property'} - {listing.bedroom || 0} Bedroom {listing.propertyType || 'Unit'}
-                  </h3>
-                  
-                  {/* Price and Status */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-lg font-bold text-green-600">
-                      ${listing.price ? Number(listing.price).toLocaleString() : '0'}
-                    </span>
-                    <Badge variant={listing.active ? "default" : "secondary"}>
-                      {listing.active ? "Active" : "Draft"}
-                    </Badge>
-                    <Badge variant="outline">{listing.type || 'Sale'}</Badge>
-                  </div>
-                  
-                  {/* Amenities with Icons */}
-                  <div className="flex flex-wrap gap-3 mb-2">
-                    {/* Basic Property Features */}
-                    {listing.bedroom && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <BedDouble className="h-4 w-4" />
-                        <span>{listing.bedroom} Bed</span>
-                      </div>
-                    )}
-                    {listing.bathroom && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Bath className="h-4 w-4" />
-                        <span>{listing.bathroom} Bath</span>
-                      </div>
-                    )}
-                    {listing.parking && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <CarFront className="h-4 w-4" />
-                        <span>{listing.parking} Parking</span>
-                      </div>
-                    )}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Location above listing name */}
+                    <div className="flex items-center text-sm text-gray-500 mb-2">
+                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span className="truncate">
+                        {listing.address || 'Location not specified'}
+                      </span>
+                    </div>
                     
-                    {/* Additional Amenities */}
-                    {listing.amenities && listing.amenities.split(',').slice(0, 3).map((amenity, index) => (
-                      <div key={index} className="flex items-center gap-1 text-sm text-gray-600">
-                        {getAmenityIcon(amenity)}
-                        <span className="capitalize">{amenity.trim()}</span>
-                      </div>
-                    ))}
+                    {/* Listing Name */}
+                    <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
+                      {listing.propertyType || 'Property'} - {listing.bedroom || 0} Bedroom {listing.propertyType || 'Unit'}
+                    </h3>
                     
-                    {/* Show area if available */}
-                    {listing.area && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Home className="h-4 w-4" />
-                        <span>{listing.area}</span>
-                      </div>
-                    )}
+                    {/* Price and Status */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-lg font-bold text-green-600">
+                        ${listing.price ? Number(listing.price).toLocaleString() : '0'}
+                      </span>
+                      <Badge variant={listing.active ? "default" : "secondary"}>
+                        {listing.active ? "Active" : "Draft"}
+                      </Badge>
+                      <Badge variant="outline">{listing.type || 'Sale'}</Badge>
+                    </div>
+                    
+                    {/* Amenities with Icons */}
+                    <div className="flex flex-wrap gap-3 mb-2">
+                      {/* Basic Property Features */}
+                      {listing.bedroom && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <BedDouble className="h-4 w-4" />
+                          <span>{listing.bedroom} Bed</span>
+                        </div>
+                      )}
+                      {listing.bathroom && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Bath className="h-4 w-4" />
+                          <span>{listing.bathroom} Bath</span>
+                        </div>
+                      )}
+                      {listing.parking && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <CarFront className="h-4 w-4" />
+                          <span>{listing.parking} Parking</span>
+                        </div>
+                      )}
+                      
+                      {/* Additional Amenities */}
+                      {listing.amenities && listing.amenities.split(',').slice(0, 3).map((amenity, index) => (
+                        <div key={index} className="flex items-center gap-1 text-sm text-gray-600">
+                          {getAmenityIcon(amenity)}
+                          <span className="capitalize">{amenity.trim()}</span>
+                        </div>
+                      ))}
+                      
+                      {/* Show area if available */}
+                      {listing.area && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Home className="h-4 w-4" />
+                          <span>{listing.area}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link href={`/dashboard/view-listing/${listing.id}`}>
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link href={`/edit-listing/${listing.id}`}>
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => toggleListingStatus(listing.id, listing.active)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    {listing.active ? 'Deactivate' : 'Activate'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteListing(listing.id)}
-                  >
-                    <Trash className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

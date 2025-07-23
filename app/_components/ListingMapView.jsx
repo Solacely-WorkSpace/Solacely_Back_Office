@@ -14,6 +14,7 @@ function ListingMapView({ type }) {
   const [bathCount, setBathCount] = useState(0);
   const [parkingCount, setParkingCount] = useState(0);
   const [homeType, setHomeType] = useState();
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [coordinates, setCoordinates] = useState();
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,6 +86,13 @@ function ListingMapView({ type }) {
     if (homeType) {
       query = query.eq("propertyType", homeType);
     }
+    // Add price range filtering
+    if (priceRange.min && priceRange.min !== '') {
+      query = query.gte("regularPrice", parseInt(priceRange.min));
+    }
+    if (priceRange.max && priceRange.max !== '') {
+      query = query.lte("regularPrice", parseInt(priceRange.max));
+    }
 
     const { data, error } = await query;
     if (data) {
@@ -114,15 +122,15 @@ function ListingMapView({ type }) {
       {/* Navbar */}
       <Nav />
       
-      {/* Main content - Remove top padding to eliminate gap */}
-      <div className="flex h-screen pt-7"> {/* pt-16 for navbar height only */}
-        {/* Map Section - Left Side - Full Height */}
-        <div className="w-1/2 h-full">
+      {/* Main content - Responsive layout */}
+      <div className="flex flex-col lg:flex-row min-h-screen pt-7 lg:pt-7">
+        {/* Map Section - Top on mobile, Left on desktop */}
+        <div className="w-full lg:w-1/2 h-64 sm:h-80 lg:h-full order-2 lg:order-1">
           <GoogleMapSection listing={getCurrentListings()} coordinates={coordinates} />
         </div>
         
-        {/* Listings Section - Right Side */}
-        <div className="w-1/2 h-full overflow-y-auto bg-white">
+        {/* Listings Section - Bottom on mobile, Right on desktop */}
+        <div className="w-full lg:w-1/2 flex-1 lg:h-full overflow-y-auto bg-white order-1 lg:order-2">
           <Listing
             listing={getCurrentListings()}
             recentListings={recentListings}
@@ -135,6 +143,7 @@ function ListingMapView({ type }) {
             setBedCount={setBedCount}
             setParkingCount={setParkingCount}
             setHomeType={setHomeType}
+            setPriceRange={setPriceRange}
             setCoordinates={setCoordinates}
             currentPage={currentPage}
             totalPages={totalPages}
