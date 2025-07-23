@@ -1,3 +1,4 @@
+"use client"
 import { MarkerF, OverlayView } from '@react-google-maps/api'
 import React, { useState } from 'react'
 import MarkerListingItem from './MarkerListingItem';
