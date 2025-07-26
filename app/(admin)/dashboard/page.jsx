@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
-import { useUser } from '@clerk/nextjs';
+import { listingsAPI } from '@/utils/api/listings';
+import { useAuth } from '@/contexts/AuthContext';
 import { BarChart, Building, Home, Users, TrendingUp, DollarSign } from 'lucide-react';
 import DashboardStats from './_components/DashboardStats';
 import RecentListings from './_components/RecentListings';
@@ -9,7 +9,7 @@ import PropertyChart from './_components/PropertyChart';
 import RevenueChart from './_components/RevenueChart';
 
 function AdminDashboard() {
-  const { user, isSignedIn } = useUser();
+  const { user, isAuthenticated } = useAuth();
   const [stats, setStats] = useState({
     totalListings: 0,
     totalCustomers: 0,
@@ -21,71 +21,45 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isSignedIn) {
+    if (isAuthenticated) {
       fetchDashboardStats();
     }
-  }, [isSignedIn]);
+  }, [isAuthenticated]);
 
   const fetchDashboardStats = async () => {
     setLoading(true);
     
     try {
-      // Get total listings count
-      const { count: totalListings, error: listingsError } = await supabase
-        .from('listing')
-        .select('*', { count: 'exact', head: true });
+      // Get all listings
+      const allListings = await listingsAPI.getListings();
+      const listings = allListings.results || allListings;
       
-      if (listingsError) {
-        console.error('Error fetching total listings:', listingsError);
-      }
+      // Get sell listings
+      const sellListings = await listingsAPI.getListings({ type: 'Sell' });
+      const sellCount = sellListings.results?.length || sellListings.length || 0;
       
-      // Get sell listings count
-      const { count: sellListings, error: sellError } = await supabase
-        .from('listing')
-        .select('*', { count: 'exact', head: true })
-        .eq('type', 'Sell');
-      
-      if (sellError) {
-        console.error('Error fetching sell listings:', sellError);
-      }
-      
-      // Get rent listings count
-      const { count: rentListings, error: rentError } = await supabase
-        .from('listing')
-        .select('*', { count: 'exact', head: true })
-        .eq('type', 'Rent');
-      
-      if (rentError) {
-        console.error('Error fetching rent listings:', rentError);
-      }
-      
-      // Get all listings data for customers and revenue calculation
-      const { data: allListings, error: dataError } = await supabase
-        .from('listing')
-        .select('createdBy, price, fullName, profileImage');
-      
-      if (dataError) {
-        console.error('Error fetching listings data:', dataError);
-      }
+      // Get rent listings
+      const rentListings = await listingsAPI.getListings({ type: 'Rent' });
+      const rentCount = rentListings.results?.length || rentListings.length || 0;
       
       // Calculate unique customers
-      const uniqueCustomers = allListings ? 
-        [...new Set(allListings.map(item => item.createdBy).filter(Boolean))] : [];
+      const uniqueCustomers = listings ? 
+        [...new Set(listings.map(item => item.created_by).filter(Boolean))] : [];
       
       // Calculate total revenue (sum of all listing prices)
-      const totalRevenue = allListings?.reduce((sum, listing) => {
+      const totalRevenue = listings?.reduce((sum, listing) => {
         const price = parseFloat(listing.price?.toString().replace(/[^\d.-]/g, '') || 0);
         return sum + price;
       }, 0) || 0;
       
       // Update stats
       setStats({
-        totalListings: totalListings || 0,
+        totalListings: listings?.length || 0,
         totalCustomers: uniqueCustomers.length || 0,
         totalRevenue: totalRevenue,
         totalReports: 183, // Static for demo - you can make this dynamic
-        sellListings: sellListings || 0,
-        rentListings: rentListings || 0
+        sellListings: sellCount,
+        rentListings: rentCount
       });
       
     } catch (error) {

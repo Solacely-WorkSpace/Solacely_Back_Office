@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/utils/supabase/client';
+import { listingsAPI } from '@/utils/api/listings';
 
 const colors = ['#521282', '#3DC5A1', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'];
 
@@ -18,32 +18,23 @@ function PropertyChart() {
   const fetchLocationData = async () => {
     setLoading(true);
     try {
-      const { data: listings, error } = await supabase
-        .from('listing')
-        .select('address')
-        .eq('active', true);
-
-      if (error) {
-        console.error('Error fetching location data:', error);
-        return;
-      }
+      const response = await listingsAPI.getListings({ status: 'available' });
+      const listings = response.results || response;
 
       if (listings) {
-        // Extract city/state from address and count occurrences
+        // Extract city/state from location and count occurrences
         const locationCounts = {};
         
         listings.forEach(listing => {
-          if (listing.address) {
-            // Extract the last part of the address (usually city/state)
-            const addressParts = listing.address.split(',');
+          if (listing.location) {
+            // Extract the last part of the location (usually city/state)
+            const locationParts = listing.location.split(',');
             let location = 'Other';
             
-            if (addressParts.length >= 2) {
-              // Get the second to last part (usually the city)
-              location = addressParts[addressParts.length - 2].trim();
-            } else if (addressParts.length === 1) {
-              // If only one part, use it
-              location = addressParts[0].trim();
+            if (locationParts.length >= 2) {
+              location = locationParts[locationParts.length - 2].trim();
+            } else if (locationParts.length === 1) {
+              location = locationParts[0].trim();
             }
             
             // Clean up common location names
@@ -51,14 +42,6 @@ function PropertyChart() {
               location = 'Lagos';
             } else if (location.toLowerCase().includes('abuja')) {
               location = 'Abuja';
-            } else if (location.toLowerCase().includes('port harcourt') || location.toLowerCase().includes('ph')) {
-              location = 'Port Harcourt';
-            } else if (location.toLowerCase().includes('kano')) {
-              location = 'Kano';
-            } else if (location.toLowerCase().includes('ibadan')) {
-              location = 'Ibadan';
-            } else if (location.toLowerCase().includes('kaduna')) {
-              location = 'Kaduna';
             }
             
             locationCounts[location] = (locationCounts[location] || 0) + 1;
@@ -77,7 +60,7 @@ function PropertyChart() {
             color: colors[index % colors.length]
           }))
           .sort((a, b) => b.count - a.count)
-          .slice(0, 6); // Show top 6 locations
+          .slice(0, 6);
 
         setData(chartData);
       }

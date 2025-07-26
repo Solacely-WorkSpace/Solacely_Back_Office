@@ -1,47 +1,24 @@
-import { Outfit } from "next/font/google";
-import { Roboto } from "next/font/google"
-
+import { Inter } from "next/font/google";
 import "./globals.css";
-import Provider from "./Provider";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Toaster } from 'sonner';
 
-const inter = Outfit({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Solacely",
-  description: "Home Away From Home",
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
-  },
+  title: "Solacely - Find Your Perfect Home",
+  description: "Your trusted platform for finding the perfect rental property",
 };
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "700"], // Added weights
-  variable: "--font-rob",
-  display: "swap",
-});
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
     <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-      </head>
-      <body className={`${roboto.className} `}>
-        <Provider>
-         <Toaster />
-
-         {children}
-        </Provider>
-       </body>
+      <body className={inter.className}>
+        <AuthProvider>
+          {children}
+          <Toaster position="top-right" richColors />
+        </AuthProvider>
+      </body>
     </html>
-    </ClerkProvider>
   );
 }

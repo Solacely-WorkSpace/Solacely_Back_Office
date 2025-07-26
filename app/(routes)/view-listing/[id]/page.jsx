@@ -1,5 +1,5 @@
 "use client";
-import { supabase } from "@/utils/supabase/client";
+import { listingsAPI } from "@/utils/api/listings";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, MapPin, Users, Calendar, Maximize, DollarSign, Check, X, User, Grid3X3, Expand } from "lucide-react";
@@ -15,42 +15,42 @@ import {
 } from "@/components/ui/carousel";
 
 function ViewListing({ params }) {
-  const [listingDetail, setListingDetail] = useState();
+  const [listingDetail, setListingDetail] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    GetListingDetail();
-  }, []);
-
-  const GetListingDetail = async () => {
-    const { data, error } = await supabase
-      .from("listing")
-      .select("*,listingimages(url,listing_id)")
-      .eq("id", params.id)
-      .eq("active", true);
-
-    if (data) {
-      setListingDetail(data[0]);
-      console.log(data);
+    if (params?.id) {
+      fetchListingDetail();
     }
-    if (error) {
-      toast("Server side error!");
+  }, [params?.id]);
+
+  const fetchListingDetail = async () => {
+    try {
+      setLoading(true);
+      const data = await listingsAPI.getListing(params.id);
+      setListingDetail(data);
+    } catch (error) {
+      console.error('Error fetching listing:', error);
+      toast.error('Failed to load listing details');
+    } finally {
+      setLoading(false);
     }
   };
 
   const nextImage = () => {
-    if (listingDetail?.listingimages) {
+    if (listingDetail?.images) {
       setCurrentImageIndex((prev) => 
-        prev === listingDetail.listingimages.length - 1 ? 0 : prev + 1
+        prev === listingDetail.images.length - 1 ? 0 : prev + 1
       );
     }
   };
 
   const prevImage = () => {
-    if (listingDetail?.listingimages) {
+    if (listingDetail?.images) {
       setCurrentImageIndex((prev) => 
-        prev === 0 ? listingDetail.listingimages.length - 1 : prev - 1
+        prev === 0 ? listingDetail.images.length - 1 : prev - 1
       );
     }
   };
@@ -59,7 +59,7 @@ function ViewListing({ params }) {
     setCurrentImageIndex(index);
   };
 
-  if (!listingDetail) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 animate-pulse">
         <div className="h-[60vh] bg-gray-200 rounded-b-3xl"></div>
@@ -71,6 +71,17 @@ function ViewListing({ params }) {
             </div>
             <div className="h-64 bg-gray-200 rounded"></div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!listingDetail) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Listing Not Found</h2>
+          <p className="text-gray-600">The listing you're looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     );
@@ -106,12 +117,12 @@ function ViewListing({ params }) {
     <div className="min-h-screen bg-gray-50">
       {/* Modern Hero Image Section */}
       <div className="relative bg-white">
-        {listingDetail?.listingimages && listingDetail.listingimages.length > 0 ? (
+        {listingDetail?.images && listingDetail.images.length > 0 ? (
           <div className="relative">
             {/* Main Image Container */}
             <div className="relative h-[60vh] md:h-[70vh] overflow-hidden rounded-b-3xl bg-gray-100">
               <Image
-                src={listingDetail.listingimages[currentImageIndex]?.url}
+                src={listingDetail.images[currentImageIndex]?.image}
                 alt="Property"
                 fill
                 className="object-cover transition-all duration-500 ease-in-out"
@@ -122,7 +133,7 @@ function ViewListing({ params }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
               
               {/* Modern Navigation Arrows */}
-              {listingDetail.listingimages.length > 1 && (
+              {listingDetail.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -143,7 +154,7 @@ function ViewListing({ params }) {
               <div className="absolute top-6 right-6 flex gap-3">
                 {/* Image Counter */}
                 <div className="bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium">
-                  {currentImageIndex + 1} / {listingDetail.listingimages.length}
+                  {currentImageIndex + 1} / {listingDetail.images.length}
                 </div>
                 
                 {/* View All Photos Button */}
@@ -166,9 +177,9 @@ function ViewListing({ params }) {
             </div>
 
             {/* Modern Thumbnail Strip */}
-            {listingDetail.listingimages.length > 1 && (
+            {listingDetail.images.length > 1 && (
               <div className="absolute bottom-6 left-6 flex gap-2 max-w-md overflow-x-auto scrollbar-hide">
-                {listingDetail.listingimages.slice(0, 6).map((image, index) => (
+                {listingDetail.images.slice(0, 6).map((image, index) => (
                   <button
                     key={index}
                     onClick={() => selectImage(index)}
@@ -179,32 +190,19 @@ function ViewListing({ params }) {
                     }`}
                   >
                     <Image
-                      src={image.url}
+                      src={image.image}
                       alt={`Property image ${index + 1}`}
                       fill
                       className="object-cover"
                     />
                   </button>
                 ))}
-                {listingDetail.listingimages.length > 6 && (
-                  <button
-                    onClick={() => setShowImageGallery(true)}
-                    className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl bg-black/50 backdrop-blur-sm flex items-center justify-center text-white font-medium text-sm hover:bg-black/60 transition-all duration-200"
-                  >
-                    +{listingDetail.listingimages.length - 6}
-                  </button>
-                )}
               </div>
             )}
           </div>
         ) : (
-          <div className="h-[60vh] bg-gradient-to-br from-gray-100 to-gray-200 rounded-b-3xl flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Grid3X3 className="w-12 h-12 text-gray-500" />
-              </div>
-              <span className="text-gray-500 text-lg font-medium">No images available</span>
-            </div>
+          <div className="h-[60vh] md:h-[70vh] bg-gray-200 rounded-b-3xl flex items-center justify-center">
+            <p className="text-gray-500">No images available</p>
           </div>
         )}
       </div>
@@ -266,7 +264,7 @@ function ViewListing({ params }) {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Property Details */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* Property Header */}
             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
               <div className="flex items-center text-gray-600 mb-3">

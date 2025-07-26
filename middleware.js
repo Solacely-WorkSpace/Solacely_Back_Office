@@ -1,49 +1,49 @@
-import { authMiddleware, clerkClient } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
-export default authMiddleware({
-  publicRoutes: ['/sign-in', '/sign-up', '/sign-in/(.*)', '/sign-up/(.*)', '/api/webhooks/(.*)', '/rent', '/view-listing/(.*)', '/add-new-listing'],
-  async afterAuth(auth, req) {
-    // If the user is trying to access admin routes
-    if (req.nextUrl.pathname.startsWith('/(admin)') || 
-        req.nextUrl.pathname.startsWith('/dashboard')) {
-      // Check if user is authenticated
-      if (!auth.userId) {
-        return NextResponse.redirect(new URL('/sign-in', req.url));
-      }
-      
-      // Get user metadata to check if they're an admin
-      const user = await clerkClient.users.getUser(auth.userId);
-      const isAdmin = user.publicMetadata.role === 'admin';
-      
-      // If not an admin, redirect to user dashboard
-      if (!isAdmin) {
-        return NextResponse.redirect(new URL('/user/dashboard', req.url));
-      }
-    }
-    
-    // If the user is trying to access user dashboard routes
-    if (req.nextUrl.pathname.startsWith('/user/dashboard') || 
-        req.nextUrl.pathname.startsWith('/user/wishlist')) {
-      // Check if user is authenticated
-      if (!auth.userId) {
-        return NextResponse.redirect(new URL('/sign-in', req.url));
-      }
-      
-      // Get user metadata to check if they're an admin
-      const user = await clerkClient.users.getUser(auth.userId);
-      const isAdmin = user.publicMetadata.role === 'admin';
-      
-      // If admin, redirect to admin dashboard
-      if (isAdmin) {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-    }
-    
-    return NextResponse.next();
+export function middleware(request) {
+  const token = request.cookies.get('access_token')?.value;
+  const { pathname } = request.nextUrl;
+
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/sign-in',
+    '/sign-up',
+    '/verify-email',
+    '/forgot-password',
+    '/reset-password',
+    '/',
+    '/rent',
+    '/view-listing'
+  ];
+
+  // Check if the current path is public
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  );
+
+  // Admin routes
+  const isAdminRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/(admin)');
+
+  // Protected routes
+  const isProtectedRoute = pathname.startsWith('/user') || 
+                          pathname.startsWith('/add-new-listing') || 
+                          pathname.startsWith('/edit-listing');
+
+  // If trying to access protected routes without token
+  if ((isProtectedRoute || isAdminRoute) && !token) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
   }
-});
+
+  // If authenticated and trying to access auth pages, redirect to home
+  if (token && (pathname === '/sign-in' || pathname === '/sign-up')) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ["/((?!.+.[w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };

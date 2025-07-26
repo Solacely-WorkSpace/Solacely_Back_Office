@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/utils/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { listingsAPI } from '@/utils/api/listings';
 import { toast } from 'sonner';
 
 // Import components
@@ -13,14 +13,14 @@ import WishlistSection from '../_components/WishlistSection';
 import DashboardStats from '../_components/DashboardStats';
 
 function UserDashboard() {
-  const { user, isSignedIn } = useUser();
+  const { user, isAuthenticated } = useAuth();
   const [listings, setListings] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasRentedApartment, setHasRentedApartment] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard'); // New state for active view
+  const [activeView, setActiveView] = useState('dashboard');
   
   const listingsPerPage = 6;
 
@@ -29,11 +29,11 @@ function UserDashboard() {
   };
 
   useEffect(() => {
-    if (isSignedIn && user) {
+    if (isAuthenticated && user) {
       fetchListings();
       fetchWishlist();
     }
-  }, [isSignedIn, user]);
+  }, [isAuthenticated, user]);
 
   // Close mobile sidebar when screen size changes to desktop
   useEffect(() => {
@@ -49,33 +49,28 @@ function UserDashboard() {
 
   const fetchListings = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('listing')
-      .select(`*, listingimages(url, listing_id)`)
-      .eq('active', true)
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setListings(data);
-    }
-    if (error) {
+    try {
+      const data = await listingsAPI.getListings({ active: true });
+      setListings(data.results || data);
+    } catch (error) {
       console.error('Error fetching listings:', error);
+      toast.error('Failed to fetch listings');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchWishlist = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
-      .from('user_wishlist')
-      .select('listing_id')
-      .eq('user_email', user.primaryEmailAddress.emailAddress);
-
-    if (data) {
-      setWishlist(data.map(item => item.listing_id));
-    }
-    if (error) {
+    try {
+      // Note: You'll need to implement wishlist API endpoints in Django
+      // For now, using localStorage as fallback
+      const savedWishlist = localStorage.getItem(`wishlist_${user.email}`);
+      if (savedWishlist) {
+        setWishlist(JSON.parse(savedWishlist));
+      }
+    } catch (error) {
       console.error('Error fetching wishlist:', error);
     }
   };
@@ -88,36 +83,21 @@ function UserDashboard() {
 
     const isInWishlist = wishlist.includes(listingId);
     
-    if (isInWishlist) {
-      const { error } = await supabase
-        .from('user_wishlist')
-        .delete()
-        .eq('user_email', user.primaryEmailAddress.emailAddress)
-        .eq('listing_id', listingId);
-
-      if (!error) {
-        setWishlist(prev => prev.filter(id => id !== listingId));
+    try {
+      let newWishlist;
+      if (isInWishlist) {
+        newWishlist = wishlist.filter(id => id !== listingId);
         toast.success('Removed from wishlist');
       } else {
-        toast.error('Failed to remove from wishlist');
-        console.error('Error removing from wishlist:', error);
-      }
-    } else {
-      const { error } = await supabase
-        .from('user_wishlist')
-        .insert({
-          user_email: user.primaryEmailAddress.emailAddress,
-          listing_id: listingId,
-          created_at: new Date().toISOString()
-        });
-
-      if (!error) {
-        setWishlist(prev => [...prev, listingId]);
+        newWishlist = [...wishlist, listingId];
         toast.success('Added to wishlist');
-      } else {
-        toast.error('Failed to add to wishlist');
-        console.error('Error adding to wishlist:', error);
       }
+      
+      setWishlist(newWishlist);
+      localStorage.setItem(`wishlist_${user.email}`, JSON.stringify(newWishlist));
+    } catch (error) {
+      toast.error('Failed to update wishlist');
+      console.error('Error updating wishlist:', error);
     }
   };
 
@@ -200,12 +180,20 @@ function UserDashboard() {
       />
 
       {/* Main Content */}
-      <div className="md:ml-[250px] p-4 md:p-6">
-        {/* Header Component */}
-        <DashboardHeader user={user} toggleSidebar={toggleSidebar} />
+      <div className={`transition-all duration-300 ${
+        sidebarOpen ? 'md:ml-64' : 'md:ml-64'
+      }`}>
+        {/* Dashboard Header */}
+        <DashboardHeader 
+          user={user}
+          toggleSidebar={toggleSidebar}
+          activeView={activeView}
+        />
 
-        {/* Dynamic Content Based on Active View */}
-        {renderContent()}
+        {/* Main Dashboard Content */}
+        <main className="p-6">
+          {renderContent()}
+        </main>
       </div>
     </div>
   );

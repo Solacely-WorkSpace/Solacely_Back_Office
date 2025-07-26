@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { listingsAPI } from '@/utils/api/listings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function Analytics() {
@@ -23,52 +23,54 @@ function Analytics() {
   const fetchAnalytics = async () => {
     setLoading(true);
     
-    // Get all listings for analysis
-    const { data, error } = await supabase
-      .from('listing')
-      .select('*');
-    
-    if (data) {
-      // Calculate statistics
-      const totalListings = data.length;
-      const activeListings = data.filter(item => item.active).length;
-      const sellListings = data.filter(item => item.type === 'Sell').length;
-      const rentListings = data.filter(item => item.type === 'Rent').length;
+    try {
+      const response = await listingsAPI.getListings();
+      const data = response.results || response;
       
-      // Calculate averages
-      const prices = data.map(item => item.price).filter(Boolean);
-      const averagePrice = prices.length > 0 
-        ? Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length) 
-        : 0;
-      
-      const bedrooms = data.map(item => item.bedroom).filter(Boolean);
-      const averageBedrooms = bedrooms.length > 0
-        ? (bedrooms.reduce((sum, count) => sum + count, 0) / bedrooms.length).toFixed(1)
-        : 0;
-      
-      const bathrooms = data.map(item => item.bathroom).filter(Boolean);
-      const averageBathrooms = bathrooms.length > 0
-        ? (bathrooms.reduce((sum, count) => sum + count, 0) / bathrooms.length).toFixed(1)
-        : 0;
-      
-      // Count property types
-      const propertyTypes = {};
-      data.forEach(item => {
-        if (item.propertyType) {
-          propertyTypes[item.propertyType] = (propertyTypes[item.propertyType] || 0) + 1;
-        }
-      });
-      
-      setStats({
-        totalListings,
-        activeListings,
-        sellListings,
-        rentListings,
-        averagePrice,
-        averageBedrooms,
-        averageBathrooms,
-        propertyTypes
-      });
+      if (data) {
+        // Calculate statistics
+        const totalListings = data.length;
+        const activeListings = data.filter(item => item.status === 'available').length;
+        const sellListings = data.filter(item => item.listing_type === 'sale').length;
+        const rentListings = data.filter(item => item.listing_type === 'rent').length;
+        
+        // Calculate averages
+        const prices = data.map(item => item.price).filter(Boolean);
+        const averagePrice = prices.length > 0 
+          ? Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length) 
+          : 0;
+        
+        const bedrooms = data.map(item => item.number_of_bedrooms).filter(Boolean);
+        const averageBedrooms = bedrooms.length > 0
+          ? (bedrooms.reduce((sum, count) => sum + count, 0) / bedrooms.length).toFixed(1)
+          : 0;
+        
+        const bathrooms = data.map(item => item.number_of_bathrooms).filter(Boolean);
+        const averageBathrooms = bathrooms.length > 0
+          ? (bathrooms.reduce((sum, count) => sum + count, 0) / bathrooms.length).toFixed(1)
+          : 0;
+        
+        // Count property types
+        const propertyTypes = {};
+        data.forEach(item => {
+          if (item.building_type) {
+            propertyTypes[item.building_type] = (propertyTypes[item.building_type] || 0) + 1;
+          }
+        });
+        
+        setStats({
+          totalListings,
+          activeListings,
+          sellListings,
+          rentListings,
+          averagePrice,
+          averageBedrooms,
+          averageBathrooms,
+          propertyTypes
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
     }
     
     setLoading(false);

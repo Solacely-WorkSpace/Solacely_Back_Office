@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase/client";
+import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Pencil, Trash, Search, Filter } from "lucide-react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -29,28 +30,25 @@ function ListingsManagement() {
 
   const fetchListings = async () => {
     setLoading(true);
-    let query = supabase
-      .from("listing")
-      .select(`*, listingimages(url, listing_id)`);
+    try {
+      const params = {};
+      if (filterType && filterType !== "all") {
+        params.type = filterType;
+      }
+      if (filterStatus === "active") {
+        params.active = true;
+      } else if (filterStatus === "inactive") {
+        params.active = false;
+      }
 
-    if (filterType) {
-      query = query.eq("type", filterType);
+      const data = await listingsAPI.getListings(params);
+      setListings(data.results || data);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      toast.error('Failed to fetch listings');
+    } finally {
+      setLoading(false);
     }
-
-    if (filterStatus === "active") {
-      query = query.eq("active", true);
-    } else if (filterStatus === "inactive") {
-      query = query.eq("active", false);
-    }
-
-    const { data, error } = await query.order("created_at", {
-      ascending: false,
-    });
-
-    if (data) {
-      setListings(data);
-    }
-    setLoading(false);
   };
 
   const handleSearch = () => {
@@ -70,19 +68,26 @@ function ListingsManagement() {
 
   const handleDeleteListing = async (id) => {
     if (confirm("Are you sure you want to delete this listing?")) {
-      await supabase.from("listing").delete().eq("id", id);
-
-      fetchListings();
+      try {
+        await listingsAPI.deleteListing(id);
+        toast.success('Listing deleted successfully');
+        fetchListings();
+      } catch (error) {
+        console.error('Error deleting listing:', error);
+        toast.error('Failed to delete listing');
+      }
     }
   };
 
   const toggleListingStatus = async (id, currentStatus) => {
-    await supabase
-      .from("listing")
-      .update({ active: !currentStatus })
-      .eq("id", id);
-
-    fetchListings();
+    try {
+      await listingsAPI.updateListing(id, { active: !currentStatus });
+      toast.success('Listing status updated');
+      fetchListings();
+    } catch (error) {
+      console.error('Error updating listing status:', error);
+      toast.error('Failed to update listing status');
+    }
   };
 
   return (
@@ -165,7 +170,7 @@ function ListingsManagement() {
                       <div className="relative h-16 w-16 rounded-md overflow-hidden">
                         <Image
                           src={
-                            listing?.listingimages?.[0]?.url ||
+                            listing?.images?.[0]?.image ||
                             "/placeholder.svg"
                           }
                           alt={listing.address}
@@ -206,22 +211,16 @@ function ListingsManagement() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() =>
-                          toggleListingStatus(listing.id, listing.active)
-                        }
+                        onClick={() => toggleListingStatus(listing.id, listing.active)}
                       >
-                        <Badge
-                          variant={listing.active ? "destructive" : "success"}
-                        >
-                          {listing.active ? "Deactivate" : "Activate"}
-                        </Badge>
+                        {listing.active ? "Deactivate" : "Activate"}
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteListing(listing.id)}
                       >
-                        <Trash className="h-4 w-4 text-red-500" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
