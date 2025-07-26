@@ -1,4 +1,6 @@
 "use client";
+import React, { useEffect, useState } from 'react';
+import { listingsAPI } from '@/utils/api/listings';
 import { supabase } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +12,29 @@ import { useRouter } from "next/navigation";
 import GoogleMapSection from "@/app/_components/GoogleMapSection";
 
 function AdminViewListing({ params }) {
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        setLoading(true);
+        const response = await listingsAPI.getListing(params.id);
+        setListing(response);
+      } catch (err) {
+        console.error('Error fetching listing:', err);
+        setError('Failed to fetch listing details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchListing();
+    }
+  }, [params.id]);
+
   const [listingDetail, setListingDetail] = useState();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();

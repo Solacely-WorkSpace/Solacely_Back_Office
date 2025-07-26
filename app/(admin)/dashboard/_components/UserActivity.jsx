@@ -1,53 +1,29 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { usersAPI } from '@/utils/api/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 
 function UserActivity() {
-  const [users, setUsers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchActiveUsers();
+    fetchUserActivity();
   }, []);
 
-  const fetchActiveUsers = async () => {
-    setLoading(true);
-    
-    // Get unique users with their listing counts
-    const { data, error } = await supabase
-      .from('listing')
-      .select('createdBy, fullName, profileImage')
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      // Process data to get unique users with counts
-      const userMap = {};
-      data.forEach(item => {
-        if (item.createdBy) {
-          if (!userMap[item.createdBy]) {
-            userMap[item.createdBy] = {
-              email: item.createdBy,
-              name: item.fullName || 'Unknown User',
-              avatar: item.profileImage || '',
-              count: 1
-            };
-          } else {
-            userMap[item.createdBy].count += 1;
-          }
-        }
-      });
-      
-      // Convert to array and sort by count
-      const userArray = Object.values(userMap);
-      userArray.sort((a, b) => b.count - a.count);
-      
-      setUsers(userArray.slice(0, 5)); // Top 5 users
+  const fetchUserActivity = async () => {
+    try {
+      setLoading(true);
+      const response = await usersAPI.getUsers();
+      // Process user data to show recent activity
+      setActivities(response.results || response);
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

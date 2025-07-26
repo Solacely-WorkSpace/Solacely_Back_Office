@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { usersAPI } from '@/utils/api/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Mail, ExternalLink } from 'lucide-react';
@@ -11,47 +11,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 function UsersManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
-    
-    // Get unique users with their listing counts
-    const { data, error } = await supabase
-      .from('listing')
-      .select('createdBy, fullName, profileImage');
-    
-    if (data) {
-      // Process data to get unique users with counts
-      const userMap = {};
-      data.forEach(item => {
-        if (item.createdBy) {
-          if (!userMap[item.createdBy]) {
-            userMap[item.createdBy] = {
-              email: item.createdBy,
-              name: item.fullName || 'Unknown User',
-              avatar: item.profileImage || '',
-              count: 1,
-              lastActive: new Date().toISOString() // Placeholder
-            };
-          } else {
-            userMap[item.createdBy].count += 1;
-          }
-        }
-      });
-      
-      // Convert to array and sort by count
-      const userArray = Object.values(userMap);
-      userArray.sort((a, b) => b.count - a.count);
-      
-      setUsers(userArray);
+    try {
+      setLoading(true);
+      const response = await usersAPI.getUsers();
+      setUsers(response.results || response);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSearch = () => {
