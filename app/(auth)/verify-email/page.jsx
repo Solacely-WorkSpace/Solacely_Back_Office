@@ -2,7 +2,7 @@
 import React, { useState, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authAPI } from '@/utils/api/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Add useSearchParams here
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
