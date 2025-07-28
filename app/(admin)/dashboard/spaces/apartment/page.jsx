@@ -332,7 +332,7 @@ function ApartmentPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {apartment.address.split(',').slice(-2).join(',').trim()}
+                        {apartment.address ? apartment.address.split(',').slice(-2).join(',').trim() : 'No address'}
                       </div>
                     </TableCell>
                     <TableCell>
