@@ -25,7 +25,8 @@ export default function SignInPage() {
     
     try {
       await login(formData);
-      router.push('/');
+      // Redirect to admin dashboard instead of home
+      router.push('/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
     } finally {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
+  // We can't access localStorage in middleware (server-side)
+  // So we need to set a cookie when logging in
   const token = request.cookies.get('access_token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -11,8 +13,6 @@ export function middleware(request) {
     '/verify-email',
     '/forgot-password',
     '/reset-password',
-    '/',
-    '/rent',
     '/view-listing'
   ];
 
@@ -34,9 +34,15 @@ export function middleware(request) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // If authenticated and trying to access auth pages, redirect to home
+  // Redirect from homepage to sign-in if not authenticated
+  if (pathname === '/' && !token) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
+
+  // If authenticated and trying to access auth pages, redirect to appropriate dashboard
   if (token && (pathname === '/sign-in' || pathname === '/sign-up')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    // We'll redirect to dashboard instead of home
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();

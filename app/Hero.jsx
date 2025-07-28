@@ -1,25 +1,25 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import AiPopuop from "../components/AiPopuop";
 import { HeroIllustration, MetaImage } from "@/assets/images";
 
 const Hero = () => {
-  const { user, isSignedIn } = useUser();
+  const { user, isAuthenticated } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState("/user/dashboard");
 
   // Check if user is admin and set appropriate dashboard URL
   useEffect(() => {
-    if (isSignedIn && user) {
-      const userMetadata = user.publicMetadata;
-      const adminStatus = userMetadata.role === "admin";
+    if (isAuthenticated && user) {
+      // Assuming your backend user object has a role property
+      const adminStatus = user.role === "admin";
       setIsAdmin(adminStatus);
       setDashboardUrl(adminStatus ? "/dashboard" : "/user/dashboard");
     }
-  }, [isSignedIn, user]);
+  }, [isAuthenticated, user]);
 
   return (
     <section className="landingpage-container px-4 md:px-0 mt-20">
@@ -43,10 +43,10 @@ const Hero = () => {
 
             <div className=" flex justify-between md:flex-col gap-8 py-4 mt-6 items-center md:items-start">
               <Link
-                href={isSignedIn ? dashboardUrl : "/sign-up"}
+                href={isAuthenticated ? dashboardUrl : "/sign-in"}
                 className="btn-primary"
               >
-                {isSignedIn ? "Dashboard" : "Get Started"}
+                {isAuthenticated ? "Dashboard" : "Get Started"}
               </Link>
 
               <article>

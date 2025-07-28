@@ -144,12 +144,12 @@ function AdminViewListing({ params }) {
           <div className="relative h-80 bg-gray-900 rounded-lg overflow-hidden">
             {listingDetail?.listingimages && listingDetail.listingimages.length > 0 ? (
               <>
-                <Image
-                  src={listingDetail.listingimages[currentImageIndex]?.url}
-                  alt="Property"
-                  fill
-                  className="object-cover"
-                />
+            <Image
+  src={listingDetail.listingimages[currentImageIndex]?.original_image_url || listingDetail.listingimages[currentImageIndex]?.url}
+  alt="Property"
+  fill
+  className="object-cover"
+/>
                 <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                 
                 {/* Navigation Arrows */}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { useUser, SignOutButton } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   ChevronDown,
   ChevronRight,
@@ -91,7 +91,7 @@ export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [spacesOpen, setSpacesOpen] = useState(false);
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, logout } = useAuth(); // Use your custom auth
 
   const isSpaceActive = spaceItems.some(item => pathname === item.href);
 
@@ -220,19 +220,7 @@ export default function AdminLayout({ children }) {
             );
           })}
           
-          {/* Sign Out Button */}
-          <SignOutButton>
-            <button className="flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-              <Image
-                src={LogoutIcon}
-                alt="Sign Out"
-                width={20}
-                height={20}
-                className="mr-3 w-5 h-5"
-              />
-              Sign Out
-            </button>
-          </SignOutButton>
+         
         </nav>
       </div>
 
@@ -305,12 +293,13 @@ export default function AdminLayout({ children }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600 focus:text-red-600">
-                    <SignOutButton>
-                      <div className="flex items-center w-full">
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Sign Out</span>
-                      </div>
-                    </SignOutButton>
+                    <button 
+                      onClick={logout} 
+                      className="flex items-center w-full"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </button>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

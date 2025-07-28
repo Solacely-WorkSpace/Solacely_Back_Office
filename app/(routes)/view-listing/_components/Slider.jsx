@@ -16,11 +16,13 @@ function Slider({imageList}) {
           <Carousel>
         <CarouselContent>
             {imageList.map((item,index)=>(
-                 <CarouselItem>
-                    <Image src={item.url} width={800}
-                    height={300}
-                    alt='image'
-                    className='rounded-xl object-cover h-[360px] w-full'
+                 <CarouselItem key={index}>
+                    <Image 
+                      src={item.original_image_url || item.url} 
+                      width={800}
+                      height={300}
+                      alt='image'
+                      className='rounded-xl object-cover h-[360px] w-full'
                     />
                  </CarouselItem>
             ))}

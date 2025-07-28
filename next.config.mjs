@@ -4,7 +4,7 @@ const nextConfig = {
     domains: [
       'localhost', // For Django backend images
       '127.0.0.1', // For Django backend images
-      // Remove 'supabase.co' domains
+      'res.cloudinary.com', // For Cloudinary images
     ],
   },
 };

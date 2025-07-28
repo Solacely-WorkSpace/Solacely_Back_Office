@@ -68,6 +68,10 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(credentials);
       localStorage.setItem('access_token', response.access);
       localStorage.setItem('refresh_token', response.refresh);
+      
+      // Also set a cookie for the middleware
+      document.cookie = `access_token=${response.access}; path=/; max-age=${60*60*24*7}`; // 7 days
+      
       setUser(response.user);
       setIsAuthenticated(true);
       toast.success('Login successful!');
@@ -86,6 +90,10 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      
+      // Also clear the cookie
+      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
       setUser(null);
       setIsAuthenticated(false);
       toast.success('Logged out successfully');
