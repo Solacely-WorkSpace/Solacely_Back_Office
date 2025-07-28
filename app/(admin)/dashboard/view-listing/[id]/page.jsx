@@ -1,8 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { listingsAPI } from '@/utils/api/listings';
-import { supabase } from "@/utils/supabase/client";
-import React, { useEffect, useState } from "react";
+// Remove supabase import
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, MapPin, Users, Calendar, Maximize, DollarSign, Check, X, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,49 +11,28 @@ import { useRouter } from "next/navigation";
 import GoogleMapSection from "@/app/_components/GoogleMapSection";
 
 function AdminViewListing({ params }) {
-  const [listing, setListing] = useState(null);
+  const [listingDetail, setListingDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchListing = async () => {
-      try {
-        setLoading(true);
-        const response = await listingsAPI.getListing(params.id);
-        setListing(response);
-      } catch (err) {
-        console.error('Error fetching listing:', err);
-        setError('Failed to fetch listing details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchListing();
-    }
-  }, [params.id]);
-
-  const [listingDetail, setListingDetail] = useState();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    GetListingDetail();
-  }, []);
+    getListingDetail();
+  }, [params.id]);
 
-  const GetListingDetail = async () => {
-    const { data, error } = await supabase
-      .from("listing")
-      .select("*,listingimages(url,listing_id)")
-      .eq("id", params.id);
-
-    if (data) {
-      setListingDetail(data[0]);
-      console.log(data);
-    }
-    if (error) {
-      toast("Server side error!");
+  const getListingDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await listingsAPI.getListing(params.id);
+      setListingDetail(response);
+      console.log(response);
+    } catch (err) {
+      console.error('Error fetching listing:', err);
+      toast("Error fetching listing details");
+      setError('Failed to fetch listing details');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,7 +56,7 @@ function AdminViewListing({ params }) {
     router.back();
   };
 
-  if (!listingDetail) {
+  if (loading) {
     return (
       <div className="p-6">
         <div className="animate-pulse">
@@ -144,11 +122,16 @@ function AdminViewListing({ params }) {
           <div className="relative h-80 bg-gray-900 rounded-lg overflow-hidden">
             {listingDetail?.listingimages && listingDetail.listingimages.length > 0 ? (
               <>
-            <Image
-  src={listingDetail.listingimages[currentImageIndex]?.original_image_url || listingDetail.listingimages[currentImageIndex]?.url}
+          <Image
+  src={listingDetail.listingimages[currentImageIndex]?.original_image_url || 
+       (listingDetail.listingimages[currentImageIndex]?.url && 
+        listingDetail.listingimages[currentImageIndex]?.url.startsWith('http') ? 
+        listingDetail.listingimages[currentImageIndex]?.url : 
+        `https://res.cloudinary.com/${listingDetail.listingimages[currentImageIndex]?.url}`)}
   alt="Property"
   fill
-  className="object-cover"
+  className="object-cover transition-all duration-500 ease-in-out"
+  priority
 />
                 <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                 

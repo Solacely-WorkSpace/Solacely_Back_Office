@@ -13,11 +13,14 @@ function MarkerListingItem({ item, closeHandler }) {
       >
         <X onClick={() => closeHandler()} />
         <Image
-          src={item.listingimages[0].url}
-          width={800}
-          height={150}
-          className="rounded-lg w-[180px] object-cover h-[120px]"
-        />
+  src={item.listingimages[0].original_image_url || 
+       (item.listingimages[0].url && item.listingimages[0].url.startsWith('http') ? 
+        item.listingimages[0].url : 
+        `https://res.cloudinary.com/${item.listingimages[0].url}`)}
+  width={800}
+  height={150}
+  className="rounded-lg w-[180px] object-cover h-[120px]"
+/>
         <div className="flex mt-2 flex-col gap-2 p-2 bg-white ">
           <h2 className="font-bold text-xl">${item?.price}</h2>
           <h2 className="flex gap-2 text-sm text-gray-400 ">

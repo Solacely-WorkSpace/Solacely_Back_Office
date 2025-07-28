@@ -61,7 +61,12 @@ function RecentListings() {
                 <div className="flex gap-6 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer">
                   <div className="relative h-32 w-48 md:h-36 md:w-56 rounded-lg overflow-hidden flex-shrink-0">
                     <Image
-                      src={listing?.images?.[0]?.image || "/placeholder.svg"}
+                      src={listing?.images?.[0]?.original_image_url || 
+                           (listing?.images?.[0]?.image && 
+                            listing?.images?.[0]?.image.startsWith('http') ? 
+                            listing?.images?.[0]?.image : 
+                            `https://res.cloudinary.com/${listing?.images?.[0]?.image}`) || 
+                           "/placeholder.svg"}
                       alt={listing.location || 'Property image'}
                       fill
                       className="object-cover"

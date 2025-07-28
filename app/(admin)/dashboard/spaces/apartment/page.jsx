@@ -1,18 +1,21 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, MoreHorizontal, ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useState } from 'react';
+import { listingsAPI } from '@/utils/api/listings';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -20,179 +23,146 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Image from "next/image";
-import Link from "next/link";
+} from '@/components/ui/dropdown-menu';
 
 function ApartmentPage() {
   const [apartments, setApartments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterLocation, setFilterLocation] = useState("all");
-  const [sortBy, setSortBy] = useState("created_at");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterLocation, setFilterLocation] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
     fetchApartments();
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('apartments')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'listing' },
-        (payload) => {
-          console.log('Real-time update:', payload);
-          fetchApartments();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [filterType, filterStatus, filterLocation, sortBy, sortOrder]);
 
   const fetchApartments = async () => {
     setLoading(true);
-    
     try {
-      let query = supabase
-        .from("listing")
-        .select(`*, listingimages(url, listing_id)`);
-    
-    // Apply simple filters like the recent listings component
-    if (filterStatus === "active") {
-      query = query.eq("active", true);
-    } else if (filterStatus === "inactive") {
-      query = query.eq("active", false);
-    }
-
-    if (filterType && filterType !== "all") {
-      query = query.eq("type", filterType);
-    }
-
-    if (filterLocation && filterLocation !== "all") {
-      query = query.ilike("address", `%${filterLocation}%`);
-    }
-
-    const { data, error } = await query.order(sortBy, {
-      ascending: sortOrder === "asc",
-    });
-
-    if (error) {
-      console.error('Error fetching apartments:', error);
-      setLoading(false);
-      return;
-    }
-
-    if (data) {
-      let filteredData = data;
+      // Build query parameters
+      const params = {};
       
-      // Apply search filter
-      if (searchTerm) {
-        filteredData = data.filter(
-          (apartment) =>
-            apartment.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            apartment.price?.toString().includes(searchTerm) ||
-            (apartment.propertyType && apartment.propertyType.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+      // Add type filter
+      if (filterType !== 'all') {
+        params.type = filterType;
       }
       
-      console.log('Fetched listings:', filteredData); // Debug log
-      setApartments(filteredData);
-    }
+      // Add status filter
+      if (filterStatus === 'active') {
+        params.active = true;
+      } else if (filterStatus === 'inactive') {
+        params.active = false;
+      }
+      
+      // Add location filter (will be handled by backend)
+      if (filterLocation !== 'all') {
+        params.location = filterLocation;
+      }
+      
+      // Add sorting
+      params.ordering = sortOrder === 'asc' ? sortBy : `-${sortBy}`;
+      
+      // Fetch data using the API
+      const response = await listingsAPI.getListings(params);
+      const data = response.results || response;
+      setApartments(data || []);
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Error fetching apartments:', error);
+      toast.error('Failed to fetch apartments');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSearch = () => {
-    fetchApartments();
+    if (!searchTerm) {
+      fetchApartments();
+      return;
+    }
+
+    const filteredApartments = apartments.filter(
+      (apartment) =>
+        apartment.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        apartment.price?.toString().includes(searchTerm)
+    );
+
+    setApartments(filteredApartments);
+  };
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'USD',
       minimumFractionDigits: 0,
     }).format(price);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-    });
+    }).format(date);
   };
 
-  const getStatusBadge = (active) => {
-    return active ? (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+  const getStatusBadge = (isActive) => {
+    return isActive ? (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
+        Active
+      </Badge>
     ) : (
-      <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Closed</Badge>
+      <Badge variant="outline" className="text-gray-500">
+        Inactive
+      </Badge>
     );
   };
 
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortOrder("asc");
-    }
-  };
-
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold text-gray-900">Apartment</h1>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src="/api/placeholder/24/24" />
-              <AvatarFallback className="text-xs">AK</AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-gray-600">Alexia K.</span>
-          </div>
-        </div>
-        <Button className="bg-[#521282] hover:bg-[#521282]/90 text-white">
-          <span className="mr-2">+</span>
-          Add new
+    <div className="p-6 md:p-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Apartment Listings</h1>
+        <Button asChild>
+          <Link href="/dashboard/add-listing">Add new</Link>
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Search and Filter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <div className="flex gap-2">
                 <Input
-                  placeholder="Search for Apartment..."
+                  placeholder="Search by address or price"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-10"
+                  className="flex-1"
                 />
+                <Button onClick={handleSearch}>Search</Button>
               </div>
             </div>
-            
-            {/* Filters */}
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Type" />
@@ -328,7 +298,12 @@ function ApartmentPage() {
                       <div className="flex items-center gap-3">
                         <div className="relative h-10 w-10 rounded-md overflow-hidden">
                           <Image
-                            src={apartment?.listingimages?.[0]?.url || "/images/apartment-placeholder.jpg"}
+                            src={apartment?.listingimages?.[0]?.original_image_url || 
+                                 (apartment?.listingimages?.[0]?.url && 
+                                 apartment?.listingimages?.[0]?.url.startsWith('http') ? 
+                                 apartment?.listingimages?.[0]?.url : 
+                                 `https://res.cloudinary.com/${apartment?.listingimages?.[0]?.url}`) || 
+                                "/images/apartment-placeholder.jpg"}
                             alt={apartment.address}
                             fill
                             className="object-cover"

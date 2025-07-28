@@ -87,12 +87,7 @@ function EditListing({ params }) {
         setLoading(false);
         toast("Error while uploading images");
       } else {
-        const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL + fileName;
-        const { data, error } = await supabase
-          .from("listingimages")
-          .insert([{ url: imageUrl, listing_id: params?.id }])
-          .select();
-
+        
         if (data) {
           setLoading(false);
         }

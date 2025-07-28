@@ -121,8 +121,9 @@ function ViewListing({ params }) {
           <div className="relative">
             {/* Main Image Container */}
             <div className="relative h-[60vh] md:h-[70vh] overflow-hidden rounded-b-3xl bg-gray-100">
+              // Main image container
               <Image
-                src={listingDetail.images[currentImageIndex]?.image}
+                src={listingDetail.images[currentImageIndex]?.original_image_url || listingDetail.images[currentImageIndex]?.image}
                 alt="Property"
                 fill
                 className="object-cover transition-all duration-500 ease-in-out"
@@ -228,7 +229,7 @@ function ViewListing({ params }) {
                       <CarouselItem key={index}>
                         <div className="relative h-[70vh] md:h-[75vh] rounded-2xl overflow-hidden bg-gray-900">
                           <Image
-                            src={image.url}
+                            src={image.url && image.url.startsWith('http') ? image.url : `https://res.cloudinary.com/${image.url}`}
                             alt={`Property image ${index + 1}`}
                             fill
                             className="object-contain"

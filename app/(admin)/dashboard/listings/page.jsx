@@ -170,7 +170,11 @@ function ListingsManagement() {
                       <div className="relative h-16 w-16 rounded-md overflow-hidden">
                         <Image
                           src={
-                            listing?.images?.[0]?.image ||
+                            (listing?.images?.[0]?.original_image_url ||
+                             (listing?.images?.[0]?.image && 
+                              listing?.images?.[0]?.image.startsWith('http') ? 
+                              listing?.images?.[0]?.image : 
+                              `https://res.cloudinary.com/${listing?.images?.[0]?.image}`)) ||
                             "/placeholder.svg"
                           }
                           alt={listing.address}
