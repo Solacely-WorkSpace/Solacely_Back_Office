@@ -52,16 +52,14 @@ export default function SignInPage() {
             <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-300 rounded-full opacity-10"></div>
           </div>
           
-          <div className="relative z-10 text-center text-white px-8">
+          <div className="relative z-10 w-full h-full flex items-center justify-center">
             <Image
               src="/Left-paw.png"
               alt="Solacely Logo"
-              width={200}
-              height={200}
-              className="mx-auto mb-8 drop-shadow-2xl"
+              fill
+              className="object-contain p-8"
+              priority
             />
-            <h1 className="text-4xl font-bold mb-4">Welcome Back to Solacely</h1>
-            <p className="text-xl opacity-90">Your trusted platform for finding the perfect home</p>
           </div>
         </section>
 
