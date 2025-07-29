@@ -1,29 +1,27 @@
-import Image from "next/image";
-import ListingMapView from "./_components/ListingMapView";
-import Hero from "@/app/Hero"; // Updated to match Hero.jsx
-import Tour from "@/components/Tour";
-import Waiting from "@/components/Waiting";
-import Offer from "@/components/Offer"; // Updated to match Offer.jsx
-import Ad from "@/components/Ad"; // Updated to match Ad.jsx
-import Cta from "@/components/Cta"; // Updated to match Cta.jsx
-import Nav from "@/components/Nav"; // Updated to match Nav.jsx
-import Footer from "@/app/Footer"; // Updated to match Footer.jsx
+
+"use client";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading) {
+      if (isAuthenticated) {
+        router.push('/dashboard');
+      } else {
+        router.push('/sign-in');
+      }
+    }
+  }, [isAuthenticated, loading, router]);
+
+  // Return a loading state or nothing while checking authentication
   return (
-    <>
-      <Nav />
-      {/* <ListingMapView type='Sell' />
-       */}{" "}
-      <Hero />
-      <main>
-        <Tour />
-        <Waiting />
-        <Offer />
-        <Ad />
-        <Cta />
-      </main>
-      <Footer />
-    </>
+    <main className="flex min-h-screen items-center justify-center">
+      {loading && <p>Loading...</p>}
+    </main>
   );
 }

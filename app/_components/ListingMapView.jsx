@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Listing from "./Listing";
-import { supabase } from "@/utils/supabase/client";
+
 import { toast } from "sonner";
 import GoogleMapSection from "./GoogleMapSection";
-import Nav from "@/components/Nav"; // Updated to match Nav.jsx
+
 
 function ListingMapView({ type }) {
   const [listing, setListing] = useState([]);
@@ -27,20 +27,7 @@ function ListingMapView({ type }) {
   }, []);
 
   const getLatestListing = async () => {
-    const { data, error } = await supabase
-      .from("listing")
-      .select(
-        `*,listingimages(
-            url,
-            listing_id
-        )`
-      )
-      .eq("active", true)
-      // Remove the type filter to get both rent and sell
-      // .eq("type", type)
-      .order("id", { ascending: false })
-      .limit(4); // Get only 4 recent listings
-
+    
     if (data) {
       setRecentListings(data);
       setListing(data);
@@ -58,18 +45,7 @@ function ListingMapView({ type }) {
     const searchTerm = searchedAddress?.value?.structured_formatting?.main_text;
     setSearchLocation(searchTerm || "Selected Area");
 
-    let query = supabase
-      .from("listing")
-      .select(
-        `*,listingimages(
-            url,
-            listing_id
-        )`
-      )
-      .eq("active", true)
-      .eq("type", type)
-      .order("id", { ascending: false });
-
+  
     // Apply filters
     if (bedCount > 0) {
       query = query.gte("bedroom", bedCount);

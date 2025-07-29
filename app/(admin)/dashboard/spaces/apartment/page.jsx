@@ -107,12 +107,14 @@ function ApartmentPage() {
     }
   };
 
+  // Updated to format price in Naira
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
+    if (!price) return '₦0';
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(price);
+    }).format(price).replace('NGN', '₦');
   };
 
   const formatDate = (dateString) => {
@@ -124,16 +126,50 @@ function ApartmentPage() {
     }).format(date);
   };
 
+  // Updated status badges with complementary colors
   const getStatusBadge = (isActive) => {
     return isActive ? (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
+      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 font-medium">
         Active
       </Badge>
     ) : (
-      <Badge variant="outline" className="text-gray-500">
+      <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200 font-medium">
         Inactive
       </Badge>
     );
+  };
+
+  // Helper function to get proper image URL
+  const getImageUrl = (apartment) => {
+    if (apartment?.listingimages && apartment.listingimages.length > 0) {
+      const firstImage = apartment.listingimages[0];
+      
+      // Check for original_image_url first
+      if (firstImage.original_image_url) {
+        return firstImage.original_image_url;
+      }
+      
+      // Check for url field
+      if (firstImage.url) {
+        // If it's already a full URL, use it
+        if (firstImage.url.startsWith('http')) {
+          return firstImage.url;
+        }
+        // If it's a Cloudinary path, construct the full URL
+        return `https://res.cloudinary.com/${firstImage.url}`;
+      }
+      
+      // Check for image field
+      if (firstImage.image) {
+        if (firstImage.image.startsWith('http')) {
+          return firstImage.image;
+        }
+        return `https://res.cloudinary.com/${firstImage.image}`;
+      }
+    }
+    
+    // Fallback to placeholder
+    return "/images/apartment-placeholder.jpg";
   };
 
   return (
@@ -141,7 +177,7 @@ function ApartmentPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Apartment Listings</h1>
         <Button asChild>
-          <Link href="/dashboard/add-listing">Add new</Link>
+          <Link href="/dashboard/add-new-listing">Add new</Link>
         </Button>
       </div>
 
@@ -296,22 +332,20 @@ function ApartmentPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="relative h-10 w-10 rounded-md overflow-hidden">
+                        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-gray-100">
                           <Image
-                            src={apartment?.listingimages?.[0]?.original_image_url || 
-                                 (apartment?.listingimages?.[0]?.url && 
-                                 apartment?.listingimages?.[0]?.url.startsWith('http') ? 
-                                 apartment?.listingimages?.[0]?.url : 
-                                 `https://res.cloudinary.com/${apartment?.listingimages?.[0]?.url}`) || 
-                                "/images/apartment-placeholder.jpg"}
-                            alt={apartment.address}
+                            src={getImageUrl(apartment)}
+                            alt={apartment.address || 'Property'}
                             fill
                             className="object-cover"
+                            onError={(e) => {
+                              e.target.src = "/images/apartment-placeholder.jpg";
+                            }}
                           />
                         </div>
                         <div>
                           <div className="font-medium text-sm">
-                            {apartment.propertyType || 'Property'} - {apartment.bedroom || 0} Bedroom
+                            {apartment.title || `${apartment.propertyType || apartment.building_type || 'Property'} - ${apartment.bedroom || apartment.number_of_bedrooms || 0} Bedroom`}
                           </div>
                           <div className="text-xs text-gray-500">
                             RH-{apartment.id.toString().padStart(4, '0')}
@@ -332,11 +366,11 @@ function ApartmentPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {apartment.address ? apartment.address.split(',').slice(-2).join(',').trim() : 'No address'}
+                        {apartment.location || (apartment.address ? apartment.address.split(',').slice(-2).join(',').trim() : 'No address')}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">
+                      <div className="font-bold" style={{ color: '#3DC5A1' }}>
                         {formatPrice(apartment.price)}
                       </div>
                       <div className="text-xs text-gray-500">
@@ -347,8 +381,11 @@ function ApartmentPage() {
                       {getStatusBadge(apartment.active)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {apartment.propertyType || 'Property'}
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                      >
+                        {apartment.propertyType || apartment.building_type || 'Property'}
                       </Badge>
                     </TableCell>
                     <TableCell>

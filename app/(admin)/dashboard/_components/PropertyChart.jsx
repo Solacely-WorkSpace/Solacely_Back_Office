@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { listingsAPI } from '@/utils/api/listings';
 
-const colors = ['#521282', '#3DC5A1', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'];
+const colors = ['#0062FF', '#3DD598', '#FFC542', '#EF4444', '#0062FF', '#FF974A'];
 
 function PropertyChart() {
   const [data, setData] = useState([]);

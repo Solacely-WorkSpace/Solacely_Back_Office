@@ -8,8 +8,27 @@ import {
   Bell,
   LogOut,
   User,
-  Menu
+  Menu,
+  Home,
+  Building2,
+  CreditCard,
+  UserCheck,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,42 +42,28 @@ import {
   Dashboard, DashboardSelected,
   Wallet, WalletSelected,
   Setting, SettingSelected,
-  Logo,
+  Logo, UserMgt,
   Logout as LogoutIcon
 } from '@/assets/icons';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-
 const spaceItems = [
   { name: 'Apartment', href: '/dashboard/spaces/apartment' },
-  { name: 'Coliving', href: '/dashboard/spaces/coliving' },
-  { name: 'Real Estate', href: '/dashboard/spaces/realestate' },
-  { name: 'Hotel', href: '/dashboard/spaces/hotel' },
+  { name: "Co-working Space", href: "/dashboard/spaces/co-working-space" },
+  { name: 'Real Estate', href: '/dashboard/spaces/realestate', comingSoon: true },
+  { name: 'Hotel', href: '/dashboard/spaces/hotel', comingSoon: true },
 ];
 
 const sidebarItems = [
   { 
     name: 'Customers', 
     href: '/dashboard/users', 
-    icon: '/icons/UserDashboard/user.svg',
-    selectedIcon: '/icons/UserDashboard/user.svg'
+    icon: '/icons/3 User.svg',
+    selectedIcon: '/icons/User.svg',
   },
   { 
     name: 'Partners', 
     href: '/dashboard/partners', 
-    icon: '/icons/UserDashboard/connect.svg',
+    icon: '/icons/Iconly.svg',
     selectedIcon: '/icons/UserDashboard/connect.svg'
   },
   { 
@@ -70,19 +75,19 @@ const sidebarItems = [
   { 
     name: 'Comments', 
     href: '/dashboard/comments', 
-    icon: '/icons/UserDashboard/notification.svg',
+    icon: '/icons/Chat.svg',
     selectedIcon: '/icons/UserDashboard/notification.svg'
   },
   { 
     name: 'Account', 
-    href: '/dashboard/account', 
+    href: '/dashboard/ac', 
     icon: Setting,
     selectedIcon: SettingSelected
   },
   { 
     name: 'User Mgt', 
     href: '/dashboard/logs', 
-    icon: '/icons/UserDashboard/security.svg',
+    icon: UserMgt,
     selectedIcon: '/icons/UserDashboard/security.svg'
   },
 ];
@@ -90,33 +95,95 @@ const sidebarItems = [
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [spacesOpen, setSpacesOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState(null);
   const pathname = usePathname();
-  const { user, logout } = useAuth(); // Use your custom auth
+  const { user, logout } = useAuth();
 
   const isSpaceActive = spaceItems.some(item => pathname === item.href);
 
+  // Dummy notification data
+  const notifications = [
+    {
+      id: 1,
+      type: 'new_listing',
+      title: 'New Property Listed',
+      message: 'A new apartment has been added in Victoria Island',
+      time: '2 minutes ago',
+      read: false,
+      icon: Building2,
+      color: 'text-blue-600'
+    },
+    {
+      id: 2,
+      type: 'payment',
+      title: 'Payment Received',
+      message: 'Rent payment of ₦2,500,000 received from John Doe',
+      time: '1 hour ago',
+      read: false,
+      icon: CreditCard,
+      color: 'text-green-600'
+    },
+    {
+      id: 3,
+      type: 'user_verification',
+      title: 'User Verification',
+      message: 'Sarah Johnson has completed profile verification',
+      time: '3 hours ago',
+      read: true,
+      icon: UserCheck,
+      color: 'text-purple-600'
+    },
+    {
+      id: 4,
+      type: 'system',
+      title: 'System Update',
+      message: 'Platform maintenance scheduled for tonight',
+      time: '1 day ago',
+      read: true,
+      icon: AlertCircle,
+      color: 'text-orange-600'
+    },
+    {
+      id: 5,
+      type: 'approval',
+      title: 'Listing Approved',
+      message: 'Property listing in Lekki has been approved',
+      time: '2 days ago',
+      read: true,
+      icon: CheckCircle,
+      color: 'text-green-600'
+    }
+  ];
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Close spaces dropdown when navigating to other pages
+  const handleNavClick = () => {
+    setSpacesOpen(false);
+    setActiveItem(null);
+  };
+
+  // Handle spaces click
+  const handleSpacesClick = () => {
+    setActiveItem('spaces');
+    setSpacesOpen(!spacesOpen);
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen ">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-60  border-r transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         {/* Logo Section */}
-        <div className="flex items-center justify-between h-20 px-6 border-b">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex items-center justify-between h-20 px-6 ">
+          <Link href="/" className="flex items-center ">
             <Image
               src={Logo}
               alt="Solacely Logo"
               width={32}
               height={32}
-              className="w-8 h-8"
-            />
-            <Image
-              src={LogoName}
-              alt="Solacely"
-              width={120}
-              height={32}
-              className="h-8 w-auto"
+              className="w-30"
             />
           </Link>
           <Button
@@ -133,8 +200,9 @@ export default function AdminLayout({ children }) {
           {/* Dashboard Item */}
           <Link
             href="/dashboard"
+            onClick={handleNavClick}
             className={`flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
-              pathname === '/dashboard'
+              pathname === '/dashboard' && activeItem !== 'spaces'
                 ? 'bg-primary text-white'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
@@ -153,19 +221,20 @@ export default function AdminLayout({ children }) {
           <Collapsible open={spacesOpen} onOpenChange={setSpacesOpen}>
             <CollapsibleTrigger asChild>
               <button
+                onClick={handleSpacesClick}
                 className={`flex items-center justify-between w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isSpaceActive
-                    ? 'bg-primary/10 text-primary'
+                  spacesOpen || isSpaceActive || activeItem === 'spaces'
+                    ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <div className="flex items-center">
                   <Image
-                    src="/icons/UserDashboard/home.png"
+                    src="/icons/Iconly-2.svg"
                     alt="Spaces"
                     width={20}
                     height={20}
-                    className="mr-3 w-5 h-5"
+                    className="mr-3 w-6 h-6"
                   />
                   Spaces
                 </div>
@@ -178,31 +247,45 @@ export default function AdminLayout({ children }) {
             </CollapsibleTrigger>
             <CollapsibleContent className="ml-6 mt-1 space-y-1">
               {spaceItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
-                    pathname === item.href
-                      ? 'bg-primary text-white'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                  }`}
-                >
-                  {item.name}
-                </Link>
+                <div key={item.name} className="flex items-center justify-between">
+                  {item.comingSoon ? (
+                    <div className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg text-gray-400 cursor-not-allowed">
+                      <span>{item.name}</span>
+                      <span 
+                        className="px-2 py-1 text-xs font-medium rounded-full text-white" 
+                        style={{ backgroundColor: '#3DC5A1' }}
+                      >
+                       Soon
+                      </span>
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors w-full ${
+                        pathname === item.href
+                          ? 'text-primary'
+                          : 'text-gray-500 hover:text-primary'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
               ))}
             </CollapsibleContent>
           </Collapsible>
 
           {/* Other Sidebar Items */}
           {sidebarItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href && activeItem !== 'spaces';
             const iconSrc = isActive ? item.selectedIcon : item.icon;
             
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+                onClick={handleNavClick}
+                className={`flex items-center px-3 py-5 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -219,15 +302,13 @@ export default function AdminLayout({ children }) {
               </Link>
             );
           })}
-          
-         
         </nav>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className=" ">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center space-x-4">
               <Button
@@ -248,13 +329,79 @@ export default function AdminLayout({ children }) {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-                  3
-                </Badge>
-              </Button>
+              {/* Notification Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative hover:bg-gray-50">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel className="flex items-center justify-between">
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="text-xs text-gray-500">{unreadCount} unread</span>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No notifications
+                      </div>
+                    ) : (
+                      notifications.map((notification) => {
+                        const IconComponent = notification.icon;
+                        return (
+                          <DropdownMenuItem 
+                            key={notification.id} 
+                            className={`p-3 cursor-pointer hover:bg-gray-50 ${
+                              !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
+                            }`}
+                          >
+                            <div className="flex items-start space-x-3 w-full">
+                              <div className={`p-2 rounded-full bg-gray-100 ${notification.color}`}>
+                                <IconComponent className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <p className={`text-sm font-medium text-gray-900 ${
+                                    !notification.read ? 'font-semibold' : ''
+                                  }`}>
+                                    {notification.title}
+                                  </p>
+                                  {!notification.read && (
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {notification.time}
+                                </p>
+                              </div>
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="p-3 text-center text-sm text-gray-600 hover:bg-gray-50">
+                    <div className="w-full text-center">
+                      View all notifications
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
+              {/* User Profile Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-3 hover:bg-gray-50">

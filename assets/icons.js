@@ -19,7 +19,7 @@ import linkedinIcon from "@/public/icons/SocialIcons/linkedin.png"
 
 
 // User Dashboard  Sidebar Icons
-import Logo from "@/public/icons/UserDashboard/logo.svg"
+import Logo from "@/public/icons/Frame 33340.svg"
 import Dashboard from "@/public/icons/UserDashboard/activity.png"
 import DashboardSelected from "@/public/icons/UserDashboard/activity-s.png"
 import Heart from "@/public/icons/UserDashboard/heart.png"
@@ -28,10 +28,10 @@ import Wallet from "@/public/icons/UserDashboard/wallet.png"
 import WalletSelected from "@/public/icons/UserDashboard/wallet-s.png"
 import Maintenance from "@/public/icons/UserDashboard/star.png"
 import MaintenanceSelected from "@/public/icons/UserDashboard/star-s.png"
-import Setting from "@/public/icons/UserDashboard/setting.png"
+import Setting from "@/public/icons/Vector.svg"
 import SettingSelected from "@/public/icons/UserDashboard/setting-s.png"
 import Logout from "@/public/icons/UserDashboard/logout.png"
-
+import UserMgt from "@/public/icons/2 User.svg"
 import NotificationIcon from "@/public/icons/UserDashboard/notification.png"
 import VerifiedIcon from "@/public/icons/Verified icon.svg"
 import homeIcon from "@/public/icons/UserDashboard/home.png"
@@ -40,6 +40,7 @@ import contractIcon from "@/public/icons/UserDashboard/contract.png"
 import walletIcon from "@/public/icons/UserDashboard/wallet-s.png"
 
 export {
+    UserMgt,
     appstore,
     playstore,
     LogoIcon,
