@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,25 +10,116 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, ChevronDown, Edit, Wallet, PiggyBank, Coins, CreditCard, Users, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import DashboardStats from '../_components/DashboardStats';
+import { walletAPI } from '@/utils/api/wallet';
+import { toast } from 'react-hot-toast';
+import CurrencyConverter from '@/components/CurrencyConverter';
 
 export default function WalletPage() {
   const [activeTab, setActiveTab] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  // State for API data
+  const [walletStats, setWalletStats] = useState({
+    totalBalance: '₦0',
+    totalSavings: '₦0',
+    totalTRC: '0 TRC',
+    escrowTransactions: '₦0',
+    autoSaveEnabled: '0 Tenants',
+    trcRedeemed: '₦0'
+  });
 
-  // Sample data matching the interface
-  const walletStats = {
-    totalBalance: '₦10,000,000',
-    totalSavings: '₦5,000,000',
-    totalTRC: '80,000 TRC',
-    escrowTransactions: '₦8,430,000',
-    autoSaveEnabled: '124 Tenants',
-    trcRedeemed: '₦ 680,000'
+  const [trcDistribution, setTrcDistribution] = useState({
+    surveys: { amount: 0, percentage: 0, color: '#3B82F6' },
+    microTasks: { amount: 0, percentage: 0, color: '#F59E0B' },
+    referrals: { amount: 0, percentage: 0, color: '#10B981' }
+  });
+
+  const [transactions, setTransactions] = useState([]);
+  const [escrowData, setEscrowData] = useState([]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchWalletData();
+  }, []);
+
+  // Function to fetch wallet data from API
+  const fetchWalletData = async () => {
+    setLoading(true);
+    try {
+      // Fetch wallet stats
+      const statsResponse = await walletAPI.getWalletStats();
+      const stats = statsResponse.data;
+      
+      setWalletStats({
+        totalBalance: `₦${formatNumber(stats.total_wallet_balance)}`,
+        totalSavings: `₦${formatNumber(stats.total_rent_savings)}`,
+        totalTRC: `${formatNumber(stats.total_trc_circulating)} TRC`,
+        escrowTransactions: `₦${formatNumber(stats.escrow_transactions)}`,
+        autoSaveEnabled: `${stats.auto_save_enabled_count} Tenants`,
+        trcRedeemed: `₦${formatNumber(stats.trc_redeemed)}`
+      });
+      
+      setTrcDistribution({
+        surveys: stats.trc_distribution.surveys,
+        microTasks: stats.trc_distribution.microTasks,
+        referrals: stats.trc_distribution.referrals
+      });
+      
+      // Fetch transactions
+      const transactionsResponse = await walletAPI.getAdminTransactions();
+      setTransactions(transactionsResponse.data.map(tx => ({
+        id: tx.id,
+        user: tx.wallet_user,
+        avatar: '/images/UserDashboard/avatar.png', // Default avatar
+        type: tx.type.charAt(0).toUpperCase() + tx.type.slice(1),
+        category: tx.source,
+        date: new Date(tx.created_at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }),
+        amount: `₦${formatNumber(tx.amount)}`,
+        note: tx.description,
+        status: tx.status.charAt(0).toUpperCase() + tx.status.slice(1)
+      })));
+      
+      // Fetch escrow data
+      const escrowResponse = await walletAPI.getEscrowManagement();
+      setEscrowData(escrowResponse.data.map(escrow => ({
+        id: escrow.id,
+        tenant: escrow.tenant,
+        avatar: '/images/UserDashboard/avatar.png', // Default avatar
+        property: escrow.property,
+        amount: `₦${formatNumber(escrow.amount)}`,
+        payment: escrow.payment_method,
+        date: escrow.date,
+        status: escrow.status
+      })));
+      
+    } catch (error) {
+      console.error('Error fetching wallet data:', error);
+      toast.error('Failed to fetch wallet data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const trcDistribution = {
-    surveys: { amount: 48000, percentage: 60, color: '#3B82F6' },
-    microTasks: { amount: 22400, percentage: 28, color: '#F59E0B' },
-    referrals: { amount: 9600, percentage: 12, color: '#10B981' }
+  // Helper function to format numbers with commas
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
+  // Handler for escrow actions (approve/reject)
+  const handleEscrowAction = async (id, action) => {
+    try {
+      await walletAPI.updateEscrowTransaction(id, action);
+      toast.success(`Escrow transaction ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
+      fetchWalletData(); // Refresh data
+    } catch (error) {
+      console.error(`Error ${action}ing escrow transaction:`, error);
+      toast.error(`Failed to ${action} escrow transaction`);
+    }
   };
 
   // Convert TRC distribution to chart data format
@@ -55,101 +146,15 @@ export default function WalletPage() {
 
   const totalTRC = trcDistribution.surveys.amount + trcDistribution.microTasks.amount + trcDistribution.referrals.amount;
 
-  const transactions = [
-    {
-      id: 1,
-      user: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      type: 'Flag',
-      category: 'Wallet',
-      date: 'May 10, 2025',
-      amount: '₦31,000',
-      note: 'Duplicate fund removal',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      user: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      type: 'Credit',
-      category: 'TRC',
-      date: 'May 10, 2025',
-      amount: '₦1,000',
-      note: 'Referral bonus correction',
-      status: 'Completed'
-    },
-    {
-      id: 3,
-      user: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      type: 'Debit',
-      category: 'Rent savings',
-      date: 'May 10, 2025',
-      amount: '₦200,000',
-      note: 'Duplicate deposit report',
-      status: 'Completed'
-    },
-    {
-      id: 4,
-      user: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      type: 'Credit',
-      category: 'Wallet',
-      date: 'May 10, 2025',
-      amount: '₦10,000',
-      note: 'Failed automatic deposit',
-      status: 'Completed'
-    }
-  ];
-
-  const escrowData = [
-    {
-      id: 1,
-      tenant: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      property: 'Unit B3, Sunrise Apartments, Janey Estate',
-      amount: '₦500,000',
-      payment: 'Wallet',
-      date: 'May 10, 2025',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      tenant: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      property: 'Unit B3, Sunrise Apartments, Janey Estate',
-      amount: '₦200,000',
-      payment: 'Rent Savings',
-      date: 'May 10, 2025',
-      status: 'Pending'
-    },
-    {
-      id: 3,
-      tenant: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      property: 'Unit B3, Sunrise Apartments, Janey Estate',
-      amount: '₦200,000',
-      payment: 'Rent Savings',
-      date: 'May 10, 2025',
-      status: 'Pending'
-    },
-    {
-      id: 4,
-      tenant: 'Samson John',
-      avatar: '/images/UserDashboard/avatar.png',
-      property: 'Unit B3, Sunrise Apartments, Janey Estate',
-      amount: '₦500,000',
-      payment: 'Wallet',
-      date: 'May 10, 2025',
-      status: 'Pending'
-    }
-  ];
-
   const [showEscrow, setShowEscrow] = useState(false);
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
-      {!showEscrow ? (
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <p>Loading wallet data...</p>
+        </div>
+      ) : !showEscrow ? (
         <>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -269,6 +274,23 @@ export default function WalletPage() {
               </Card>
             </div>
           </div>
+          
+          {/* Currency Converter Card - Added here */}
+          <Card className="bg-white border-0 shadow-sm mb-8">
+            <CardHeader className="border-b border-gray-100 pb-4">
+              <CardTitle className="text-lg font-semibold">Currency Converter</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <CurrencyConverter 
+                initialAmount={1000} 
+                initialFromCurrency="NGN" 
+                initialToCurrency="USD" 
+                onConversionComplete={(result) => {
+                  console.log('Conversion completed:', result);
+                }}
+              />
+            </CardContent>
+          </Card>
 
           {/* Admin Finance Console */}
           <Card className="bg-white border-0 shadow-sm">
@@ -382,7 +404,24 @@ export default function WalletPage() {
               Pending Approvals
             </button>
             <button 
-              onClick={() => setActiveTab('processed')}
+              onClick={() => {
+                setActiveTab('processed');
+                walletAPI.getEscrowManagement('successful').then(response => {
+                  setEscrowData(response.data.map(escrow => ({
+                    id: escrow.id,
+                    tenant: escrow.tenant,
+                    avatar: '/images/UserDashboard/avatar.png',
+                    property: escrow.property,
+                    amount: `₦${formatNumber(escrow.amount)}`,
+                    payment: escrow.payment_method,
+                    date: escrow.date,
+                    status: escrow.status
+                  })));
+                }).catch(error => {
+                  console.error('Error fetching processed escrow transactions:', error);
+                  toast.error('Failed to fetch processed transactions');
+                });
+              }}
               className={`pb-3 px-1 border-b-2 font-medium ${
                 activeTab === 'processed' 
                   ? 'border-[#521282] text-[#521282]' 
@@ -444,18 +483,37 @@ export default function WalletPage() {
                         <TableCell className="text-gray-600">{item.payment}</TableCell>
                         <TableCell className="text-gray-600">{item.date}</TableCell>
                         <TableCell>
-                          <Badge className="bg-yellow-100 text-yellow-800">
-                            {item.status}
+                          <Badge className={`${
+                            item.status === 'pending' 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : item.status === 'successful'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-[#521282] border-[#521282] hover:bg-[#521282] hover:text-white"
-                          >
-                            Action ▶
-                          </Button>
+                          {item.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                                onClick={() => handleEscrowAction(item.id, 'approve')}
+                              >
+                                Approve
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                                onClick={() => handleEscrowAction(item.id, 'reject')}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -468,7 +526,7 @@ export default function WalletPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-6">
             <p className="text-sm text-gray-600">
-              Showing 1 to 6 of 6 results
+              Showing 1 to {escrowData.length} of {escrowData.length} results
             </p>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled>

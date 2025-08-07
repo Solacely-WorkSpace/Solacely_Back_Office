@@ -14,9 +14,11 @@ export default function SignInPage() {
     email: '',
     password: ''
   });
+  const [twoFactorCode, setTwoFactorCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const { login, verify2FA, is2FARequired } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -24,11 +26,30 @@ export default function SignInPage() {
     setLoading(true);
     
     try {
-      await login(formData);
-      // Redirect to admin dashboard instead of home
-      router.push('/dashboard');
+      const result = await login(formData);
+      if (result.requires2FA) {
+        setShowTwoFactor(true);
+      } else {
+        // Redirect to admin dashboard
+        router.push('/dashboard');
+      }
     } catch (error) {
       console.error('Login failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      await verify2FA(twoFactorCode);
+      // Redirect to admin dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('2FA verification failed:', error);
     } finally {
       setLoading(false);
     }
@@ -71,76 +92,111 @@ export default function SignInPage() {
               <p className="text-gray-600">Welcome back! Please enter your details.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email address
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </Label>
-                <div className="relative">
+            {!showTwoFactor ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email address
+                  </Label>
                   <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    id="email"
+                    name="email"
+                    type="email"
                     required
-                    value={formData.password}
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter your password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter your email"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
-                  </button>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-purple-600 hover:text-purple-500"
+                <div>
+                  <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-purple-600 hover:text-purple-500"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
                 >
-                  Forgot your password?
-                </Link>
-              </div>
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerify2FA} className="space-y-6">
+                <div>
+                  <Label htmlFor="twoFactorCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    Two-Factor Authentication Code
+                  </Label>
+                  <Input
+                    id="twoFactorCode"
+                    name="twoFactorCode"
+                    type="text"
+                    required
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter your 2FA code"
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify'
+                  )}
+                </Button>
+              </form>
+            )}
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">

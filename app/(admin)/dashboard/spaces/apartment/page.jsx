@@ -1,21 +1,21 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { listingsAPI } from '@/utils/api/listings';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { listingsAPI } from "@/utils/api/listings";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,23 +23,37 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function ApartmentPage() {
   const [apartments, setApartments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterLocation, setFilterLocation] = useState('all');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterLocation, setFilterLocation] = useState("all");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
+  // Add this new state to track failed images
+  const [imageErrors, setImageErrors] = useState(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [apartmentToDelete, setApartmentToDelete] = useState(null);
 
   useEffect(() => {
     fetchApartments();
@@ -50,34 +64,34 @@ function ApartmentPage() {
     try {
       // Build query parameters
       const params = {};
-      
+
       // Add type filter
-      if (filterType !== 'all') {
+      if (filterType !== "all") {
         params.type = filterType;
       }
-      
+
       // Add status filter
-      if (filterStatus === 'active') {
+      if (filterStatus === "active") {
         params.active = true;
-      } else if (filterStatus === 'inactive') {
+      } else if (filterStatus === "inactive") {
         params.active = false;
       }
-      
+
       // Add location filter (will be handled by backend)
-      if (filterLocation !== 'all') {
+      if (filterLocation !== "all") {
         params.location = filterLocation;
       }
-      
+
       // Add sorting
-      params.ordering = sortOrder === 'asc' ? sortBy : `-${sortBy}`;
-      
+      params.ordering = sortOrder === "asc" ? sortBy : `-${sortBy}`;
+
       // Fetch data using the API
       const response = await listingsAPI.getListings(params);
       const data = response.results || response;
       setApartments(data || []);
     } catch (error) {
-      console.error('Error fetching apartments:', error);
-      toast.error('Failed to fetch apartments');
+      console.error("Error fetching apartments:", error);
+      toast.error("Failed to fetch apartments");
     } finally {
       setLoading(false);
     }
@@ -100,29 +114,31 @@ function ApartmentPage() {
 
   const handleSort = (column) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(column);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   // Updated to format price in Naira
   const formatPrice = (price) => {
-    if (!price) return '₦0';
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    if (!price) return "₦0";
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
       minimumFractionDigits: 0,
-    }).format(price).replace('NGN', '₦');
+    })
+      .format(price)
+      .replace("NGN", "₦");
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     }).format(date);
   };
 
@@ -141,35 +157,124 @@ function ApartmentPage() {
 
   // Helper function to get proper image URL
   const getImageUrl = (apartment) => {
+    // If this listing's image has already failed, return placeholder immediately
+    if (imageErrors.has(apartment.id)) {
+      return "/icons/Logo.svg";
+    }
+
     if (apartment?.listingimages && apartment.listingimages.length > 0) {
       const firstImage = apartment.listingimages[0];
-      
+
       // Check for original_image_url first
-      if (firstImage.original_image_url) {
+      if (firstImage.original_image_url && firstImage.original_image_url.startsWith("http")) {
+        // Validate that it's not a broken Cloudinary URL
+        if (
+          firstImage.original_image_url.includes("cloudinary.com") &&
+          (firstImage.original_image_url.includes("undefined") ||
+            firstImage.original_image_url.includes("null"))
+        ) {
+          return "/icons/Logo.svg";
+        }
         return firstImage.original_image_url;
       }
-      
+
       // Check for url field
       if (firstImage.url) {
         // If it's already a full URL, use it
-        if (firstImage.url.startsWith('http')) {
+        if (firstImage.url.startsWith("http")) {
+          // Validate that it's not a broken Cloudinary URL
+          if (
+            firstImage.url.includes("cloudinary.com") &&
+            (firstImage.url.includes("undefined") || firstImage.url.includes("null"))
+          ) {
+            return "/icons/Logo.svg";
+          }
           return firstImage.url;
         }
-        // If it's a Cloudinary path, construct the full URL
-        return `https://res.cloudinary.com/${firstImage.url}`;
+        // If it's a Cloudinary path, construct the full URL properly
+        if (firstImage.url.includes("cloudinary")) {
+          return firstImage.url; // It's likely already a full path
+        } else {
+          // Use the proper Cloudinary URL format with full domain
+          return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.url}`;
+        }
       }
-      
+
       // Check for image field
       if (firstImage.image) {
-        if (firstImage.image.startsWith('http')) {
+        if (firstImage.image.startsWith("http")) {
+          // Validate that it's not a broken Cloudinary URL
+          if (
+            firstImage.image.includes("cloudinary.com") &&
+            (firstImage.image.includes("undefined") || firstImage.image.includes("null"))
+          ) {
+            return "/icons/Logo.svg";
+          }
           return firstImage.image;
         }
-        return `https://res.cloudinary.com/${firstImage.image}`;
+        // If it's a Cloudinary path, construct the full URL properly
+        if (firstImage.image.includes("cloudinary")) {
+          return firstImage.image; // It's likely already a full path
+        } else {
+          // Use the proper Cloudinary URL format with full domain
+          return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.image}`;
+        }
       }
     }
-    
+
     // Fallback to placeholder
-    return "/images/apartment-placeholder.jpg";
+    return "/icons/Logo.svg";
+  };
+
+  // Add this function to handle image errors
+  const handleImageError = (apartmentId) => {
+    console.log(`Image failed to load for apartment ${apartmentId}, switching to placeholder`);
+    setImageErrors((prev) => new Set([...prev, apartmentId]));
+  };
+
+  // Add this new function to handle listing deletion
+  const handleDeleteListing = async (id) => {
+    // Open the custom dialog instead of using browser confirm
+    setApartmentToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Function to execute the actual deletion after confirmation
+  const confirmDelete = async () => {
+    if (!apartmentToDelete) return;
+    
+    // Optimistic update - remove from UI immediately
+    const originalApartments = [...apartments];
+    setApartments((prev) => prev.filter((apartment) => apartment.id !== apartmentToDelete));
+
+    try {
+      // Delete in backend
+      // In confirmDelete function after successful deletion:
+      try {
+        await listingsAPI.deleteListing(apartmentToDelete);
+        toast.success("Apartment listing deleted successfully");
+        
+        // Dispatch event to notify other components
+        window.dispatchEvent(new CustomEvent('listingDeleted'));
+      } catch (error) {
+        // Error handling...
+      }
+    } catch (error) {
+      // Revert on error
+      setApartments(originalApartments);
+      console.error("Error deleting apartment listing:", error);
+      toast.error("Failed to delete apartment listing");
+    } finally {
+      // Reset state
+      setApartmentToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+};
+
+  // Function to cancel deletion
+  const cancelDelete = () => {
+    setApartmentToDelete(null);
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -233,11 +338,14 @@ function ApartmentPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
-                const [column, order] = value.split('-');
-                setSortBy(column);
-                setSortOrder(order);
-              }}>
+              <Select
+                value={`${sortBy}-${sortOrder}`}
+                onValueChange={(value) => {
+                  const [column, order] = value.split("-");
+                  setSortBy(column);
+                  setSortOrder(order);
+                }}
+              >
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Date" />
                 </SelectTrigger>
@@ -252,7 +360,26 @@ function ApartmentPage() {
           </div>
         </CardContent>
       </Card>
-
+ <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              apartment listing and remove the data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Data Table */}
       <Card>
         <CardContent className="p-0">
@@ -262,36 +389,36 @@ function ApartmentPage() {
                 <TableHead className="w-[50px] text-center">
                   <input type="checkbox" className="rounded" />
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleSort('address')}
+                  onClick={() => handleSort("address")}
                 >
                   <div className="flex items-center gap-2">
                     Title/Property ID
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleSort('created_at')}
+                  onClick={() => handleSort("created_at")}
                 >
                   <div className="flex items-center gap-2">
                     Date
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleSort('address')}
+                  onClick={() => handleSort("address")}
                 >
                   <div className="flex items-center gap-2">
                     Location
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleSort('price')}
+                  onClick={() => handleSort("price")}
                 >
                   <div className="flex items-center gap-2">
                     Amount
@@ -308,19 +435,38 @@ function ApartmentPage() {
                 // Loading skeleton
                 Array.from({ length: 5 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
-                    <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : apartments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No apartments found
                   </TableCell>
                 </TableRow>
@@ -335,20 +481,29 @@ function ApartmentPage() {
                         <div className="relative h-12 w-12 rounded-md overflow-hidden bg-gray-100">
                           <Image
                             src={getImageUrl(apartment)}
-                            alt={apartment.address || 'Property'}
+                            alt={apartment.address || "Property"}
                             fill
-                            className="object-cover"
-                            onError={(e) => {
-                              e.target.src = "/images/apartment-placeholder.jpg";
+                            className={getImageUrl(apartment) === "/icons/Logo.svg" ? "object-contain p-2" : "object-cover"}
+                            onError={() => {
+                              handleImageError(apartment.id);
                             }}
                           />
                         </div>
                         <div>
                           <div className="font-medium text-sm">
-                            {apartment.title || `${apartment.propertyType || apartment.building_type || 'Property'} - ${apartment.bedroom || apartment.number_of_bedrooms || 0} Bedroom`}
+                            {apartment.title ||
+                              `${
+                                apartment.propertyType ||
+                                apartment.building_type ||
+                                "Property"
+                              } - ${
+                                apartment.bedroom ||
+                                apartment.number_of_bedrooms ||
+                                0
+                              } Bedroom`}
                           </div>
                           <div className="text-xs text-gray-500">
-                            RH-{apartment.id.toString().padStart(4, '0')}
+                            RH-{apartment.id.toString().padStart(4, "0")}
                           </div>
                         </div>
                       </div>
@@ -358,34 +513,45 @@ function ApartmentPage() {
                         {formatDate(apartment.created_at)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        at {new Date(apartment.created_at).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        at{" "}
+                        {new Date(apartment.created_at).toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {apartment.location || (apartment.address ? apartment.address.split(',').slice(-2).join(',').trim() : 'No address')}
+                        {apartment.location ||
+                          (apartment.address
+                            ? apartment.address
+                                .split(",")
+                                .slice(-2)
+                                .join(",")
+                                .trim()
+                            : "No address")}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-bold" style={{ color: '#3DC5A1' }}>
+                      <div className="font-bold" style={{ color: "#3DC5A1" }}>
                         {formatPrice(apartment.price)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {apartment.type === 'Rent' ? 'Monthly' : 'Total'}
+                        {apartment.type === "Rent" ? "Monthly" : "Total"}
                       </div>
                     </TableCell>
+                    <TableCell>{getStatusBadge(apartment.active)}</TableCell>
                     <TableCell>
-                      {getStatusBadge(apartment.active)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
                       >
-                        {apartment.propertyType || apartment.building_type || 'Property'}
+                        {apartment.propertyType ||
+                          apartment.building_type ||
+                          "Property"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -397,7 +563,9 @@ function ApartmentPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/view-listing/${apartment.id}`}>
+                            <Link
+                              href={`/dashboard/view-listing/${apartment.id}`}
+                            >
                               View Details
                             </Link>
                           </DropdownMenuItem>
@@ -406,7 +574,10 @@ function ApartmentPage() {
                               Edit
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDeleteListing(apartment.id)}
+                          >
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

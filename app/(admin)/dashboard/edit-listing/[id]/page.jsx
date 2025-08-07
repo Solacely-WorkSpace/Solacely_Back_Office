@@ -1,17 +1,23 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Upload, Trash } from 'lucide-react';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { listingsAPI } from '@/utils/api/listings';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Upload, Trash } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { listingsAPI } from "@/utils/api/listings";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 function EditListing({ params }) {
   const router = useRouter();
@@ -22,17 +28,17 @@ function EditListing({ params }) {
   const [newImages, setNewImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [formData, setFormData] = useState({
-    title: '',
-    address: '',
-    building_type: '',
-    status: 'available',
-    description: '',
-    area: '',
-    number_of_bedrooms: '',
-    number_of_bathrooms: '',
-    garage: '',
-    price: '',
-    listing_type: 'sale',
+    title: "",
+    address: "",
+    building_type: "",
+    status: "available",
+    description: "",
+    area: "",
+    number_of_bedrooms: "",
+    number_of_bathrooms: "",
+    garage: "",
+    price: "",
+    listing_type: "sale",
   });
 
   useEffect(() => {
@@ -44,59 +50,59 @@ function EditListing({ params }) {
       const data = await listingsAPI.getListing(id);
       setListing(data);
       setFormData({
-        title: data.title || '',
-        address: data.address || '',
-        building_type: data.building_type || '',
-        status: data.status || 'available',
-        description: data.description || '',
-        area: data.area || '',
-        number_of_bedrooms: data.number_of_bedrooms || '',
-        number_of_bathrooms: data.number_of_bathrooms || '',
-        garage: data.garage || '',
-        price: data.price || '',
-        listing_type: data.listing_type || 'sale',
+        title: data.title || "",
+        address: data.address || "",
+        building_type: data.building_type || "",
+        status: data.status || "available",
+        description: data.description || "",
+        area: data.area || "",
+        number_of_bedrooms: data.number_of_bedrooms || "",
+        number_of_bathrooms: data.number_of_bathrooms || "",
+        garage: data.garage || "",
+        price: data.price || "",
+        listing_type: data.listing_type || "sale",
       });
-      
+
       // Fetch existing images
       try {
         const images = await listingsAPI.getListingImages(id);
         setExistingImages(images);
       } catch (error) {
-        console.error('Error fetching images:', error);
+        console.error("Error fetching images:", error);
       }
     } catch (error) {
-      console.error('Error fetching listing:', error);
-      toast.error('Failed to load listing');
-      router.push('/dashboard/listings');
+      console.error("Error fetching listing:", error);
+      toast.error("Failed to load listing");
+      router.push("/dashboard/listings");
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setNewImages(prev => [...prev, ...files]);
+    setNewImages((prev) => [...prev, ...files]);
   };
 
   const removeNewImage = (index) => {
-    setNewImages(prev => prev.filter((_, i) => i !== index));
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const deleteExistingImage = async (imageId) => {
     try {
       await listingsAPI.deleteListingImage(id, imageId);
-      setExistingImages(prev => prev.filter(img => img.id !== imageId));
-      toast.success('Image deleted successfully');
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+      toast.success("Image deleted successfully");
     } catch (error) {
-      console.error('Error deleting image:', error);
-      toast.error('Failed to delete image');
+      console.error("Error deleting image:", error);
+      toast.error("Failed to delete image");
     }
   };
 
@@ -105,7 +111,7 @@ function EditListing({ params }) {
     try {
       // Validate required fields
       if (!formData.title || !formData.address || !formData.price) {
-        toast.error('Please fill in all required fields');
+        toast.error("Please fill in all required fields");
         return;
       }
 
@@ -119,7 +125,7 @@ function EditListing({ params }) {
       };
 
       await listingsAPI.updateListing(id, listingData);
-      
+
       // Upload new images if any
       if (newImages.length > 0) {
         for (const image of newImages) {
@@ -128,11 +134,13 @@ function EditListing({ params }) {
         }
       }
 
-      toast.success('Listing updated successfully!');
-      router.push('/dashboard/listings');
+      toast.success("Listing updated successfully!");
+      router.push("/dashboard/listings");
     } catch (error) {
-      console.error('Error updating listing:', error);
-      toast.error('Failed to update listing: ' + (error.message || 'Unknown error'));
+      console.error("Error updating listing:", error);
+      toast.error(
+        "Failed to update listing: " + (error.message || "Unknown error")
+      );
     } finally {
       setSaving(false);
     }
@@ -161,9 +169,11 @@ function EditListing({ params }) {
         </Link>
         <h1 className="text-3xl font-bold">Edit Listing</h1>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
+          <Button variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
@@ -181,12 +191,17 @@ function EditListing({ params }) {
                 id="title"
                 placeholder="Enter property title"
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                onChange={(e) => handleInputChange("title", e.target.value)}
               />
             </div>
             <div>
               <Label htmlFor="building_type">Building Type</Label>
-              <Select value={formData.building_type} onValueChange={(value) => handleInputChange('building_type', value)}>
+              <Select
+                value={formData.building_type}
+                onValueChange={(value) =>
+                  handleInputChange("building_type", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select building type" />
                 </SelectTrigger>
@@ -203,7 +218,10 @@ function EditListing({ params }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleInputChange("status", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -216,7 +234,12 @@ function EditListing({ params }) {
             </div>
             <div>
               <Label htmlFor="listing_type">Listing Type</Label>
-              <Select value={formData.listing_type} onValueChange={(value) => handleInputChange('listing_type', value)}>
+              <Select
+                value={formData.listing_type}
+                onValueChange={(value) =>
+                  handleInputChange("listing_type", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select listing type" />
                 </SelectTrigger>
@@ -234,7 +257,7 @@ function EditListing({ params }) {
               id="address"
               placeholder="Enter property address"
               value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
+              onChange={(e) => handleInputChange("address", e.target.value)}
             />
           </div>
 
@@ -244,7 +267,7 @@ function EditListing({ params }) {
               id="description"
               placeholder="Enter property description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               rows={4}
             />
           </div>
@@ -257,7 +280,7 @@ function EditListing({ params }) {
                 type="number"
                 placeholder="Enter price"
                 value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
+                onChange={(e) => handleInputChange("price", e.target.value)}
               />
             </div>
             <div>
@@ -267,7 +290,7 @@ function EditListing({ params }) {
                 type="number"
                 placeholder="Enter area"
                 value={formData.area}
-                onChange={(e) => handleInputChange('area', e.target.value)}
+                onChange={(e) => handleInputChange("area", e.target.value)}
               />
             </div>
             <div>
@@ -277,7 +300,9 @@ function EditListing({ params }) {
                 type="number"
                 placeholder="Number of bedrooms"
                 value={formData.number_of_bedrooms}
-                onChange={(e) => handleInputChange('number_of_bedrooms', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("number_of_bedrooms", e.target.value)
+                }
               />
             </div>
             <div>
@@ -287,7 +312,9 @@ function EditListing({ params }) {
                 type="number"
                 placeholder="Number of bathrooms"
                 value={formData.number_of_bathrooms}
-                onChange={(e) => handleInputChange('number_of_bathrooms', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("number_of_bathrooms", e.target.value)
+                }
               />
             </div>
           </div>
@@ -309,7 +336,11 @@ function EditListing({ params }) {
                   {existingImages.map((image) => (
                     <div key={image.id} className="relative">
                       <Image
-                        src={image.original_image_url || image.image || '/images/apartment-placeholder.jpg'}
+                        src={
+                          image.original_image_url ||
+                          image.image ||
+                          "/icons/Logo.svg"
+                        }
                         alt="Property image"
                         width={200}
                         height={150}
@@ -328,7 +359,7 @@ function EditListing({ params }) {
                 </div>
               </div>
             )}
-            
+
             {/* Upload New Images */}
             <div>
               <h3 className="text-lg font-medium mb-4">Add New Images</h3>
@@ -349,7 +380,7 @@ function EditListing({ params }) {
                   </label>
                 </Button>
               </div>
-              
+
               {/* New Image Preview */}
               {newImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">

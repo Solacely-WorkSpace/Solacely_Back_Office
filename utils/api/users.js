@@ -3,7 +3,7 @@ import { apiClient } from './client';
 export const usersAPI = {
   // Get all users (admin only)
   getUsers: async () => {
-    return await apiClient.get('/api/v1/users/');
+    return await apiClient.get('/api/v1/admin/users/');
   },
 
   // Get user by ID
@@ -29,5 +29,10 @@ export const usersAPI = {
   // Update user profile
   updateUserProfile: async (profileData) => {
     return await apiClient.patch('/api/v1/profile/', profileData);
+  },
+  
+  // Get user activities (admin only)
+  getUserActivities: async () => {
+    return await apiClient.get('/api/v1/admin/user-activities/');
   }
 };

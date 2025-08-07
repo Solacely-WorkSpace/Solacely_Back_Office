@@ -31,7 +31,7 @@ function Listing({
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         <div className="relative">
           <Image
-            src={item.listingimages?.[0]?.url || "/images/apartment-placeholder.jpg"}
+            src={item.listingimages?.[0]?.url || "/icons/Logo.svg"}
             width={300}
             height={160}
             className="w-full h-32 sm:h-40 object-cover"

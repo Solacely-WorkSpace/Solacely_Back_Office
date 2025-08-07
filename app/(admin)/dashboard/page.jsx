@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { listingsAPI } from '@/utils/api/listings';
+import { adminAPI } from '@/utils/api/admin';
 import { useAuth } from '@/contexts/AuthContext';
 import { BarChart, Building, Home, Users, TrendingUp, DollarSign } from 'lucide-react';
 import DashboardStats from './_components/DashboardStats';
@@ -11,26 +12,26 @@ import RevenueChart from './_components/RevenueChart';
 function AdminDashboard() {
   const { user, isAuthenticated } = useAuth();
   
-  // Dummy data for demonstration
-  const dummyData = {
-    totalListings: 247,
-    totalCustomers: 156,
-    totalRevenue: 45600000,
-    totalReports: 183,
-    sellListings: 142,
-    rentListings: 105,
+  // Initialize with zero values instead of dummy data
+  const initialData = {
+    totalListings: 0,
+    totalCustomers: 0,
+    totalRevenue: 0,
+    totalReports: 0,
+    sellListings: 0,
+    rentListings: 0,
     propertyTypes: {
-      apartment: 89,
-      'co-working': 23,
-      hotel: 15,
-      'real estate': 120
+      apartment: 0,
+      'co-working': 0,
+      hotel: 0,
+      'real estate': 0
     }
   };
   
-  // Initialize with dummy data to avoid loading state
-  const [stats, setStats] = useState(dummyData);
-  const [loading, setLoading] = useState(false); // Start with false
-  const [usingDummyData, setUsingDummyData] = useState(true);
+  // Initialize with zero values
+  const [stats, setStats] = useState(initialData);
+  const [loading, setLoading] = useState(false);
+  const [usingRealData, setUsingRealData] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -61,88 +62,114 @@ function AdminDashboard() {
   const fetchDashboardStats = async () => {
     setLoading(true);
     try {
-      // Get all listings - this fetches ALL properties
-      const allListings = await listingsAPI.getListings();
-      const listings = allListings.results || allListings || [];
-      
-      console.log('Fetched listings:', listings); // Debug log
-      
-      // If no data from API, keep using dummy data
-      if (!listings || listings.length === 0) {
-        console.log('No API data found, keeping dummy data');
-        setUsingDummyData(true);
-        return;
+      // Fetch data from multiple endpoints concurrently
+      const results = await Promise.allSettled([
+        adminAPI.getDashboardStats(),
+        adminAPI.getWalletStats(),
+        adminAPI.getRevenueStats(),
+        listingsAPI.getListings({ status: 'available' }) // Add status parameter like PropertyChart
+      ]);
+
+      const [adminStatsResult, walletStatsResult, revenueStatsResult, listingsResult] = results;
+
+      let newStats = { ...initialData };
+      let hasRealData = false;
+
+      // Process admin stats (users)
+      if (adminStatsResult.status === 'fulfilled' && adminStatsResult.value && adminStatsResult.value.data) {
+        const adminData = adminStatsResult.value.data;
+        newStats.totalCustomers = adminData.total_users || 0;
+        hasRealData = true;
+      }
+  
+      // Process wallet stats
+      if (walletStatsResult.status === 'fulfilled' && walletStatsResult.value && walletStatsResult.value.data) {
+        const walletData = walletStatsResult.value.data;
+        // You can use wallet data for additional metrics if needed
+        hasRealData = true;
+      }
+  
+      // Process revenue stats
+      if (revenueStatsResult.status === 'fulfilled' && revenueStatsResult.value && revenueStatsResult.value.data) {
+        const revenueData = revenueStatsResult.value.data;
+        newStats.totalRevenue = revenueData.total_revenue || 0;
+        hasRealData = true;
+      }
+
+      // Process listings data - Use same pattern as PropertyChart
+      if (listingsResult.status === 'fulfilled') {
+        const response = listingsResult.value;
+        const listings = response.results || response; // Same pattern as PropertyChart
+        
+        // Always set the total listings count, even if it's 0
+        newStats.totalListings = listings ? listings.length : 0;
+        
+        // Set hasRealData to true even if we have 0 listings
+        // This is the key change - we need to set hasRealData to true
+        // as long as the API call was successful
+        hasRealData = true;
+        
+        if (listings && listings.length > 0) {
+          // Get sell listings with status parameter
+          const sellListings = await listingsAPI.getListings({ type: 'Sell', status: 'available' });
+          const sellData = sellListings.results || sellListings;
+          const sellCount = sellData ? sellData.length : 0;
+          
+          // Get rent listings with status parameter
+          const rentListings = await listingsAPI.getListings({ type: 'Rent', status: 'available' });
+          const rentData = rentListings.results || rentListings;
+          const rentCount = rentData ? rentData.length : 0;
+          
+          // Count property types with improved categorization
+          const propertyTypes = {
+            apartment: 0,
+            'co-working': 0,
+            hotel: 0,
+            'real estate': 0
+          };
+          
+          listings.forEach(item => {
+            // Check multiple fields for property type
+            const buildingType = (item.building_type || item.propertyType || item.type || '').toLowerCase();
+            
+            if (buildingType.includes('apartment') || buildingType.includes('flat')) {
+              propertyTypes.apartment++;
+            } else if (buildingType.includes('co-working') || buildingType.includes('coworking') || buildingType.includes('office')) {
+              propertyTypes['co-working']++;
+            } else if (buildingType.includes('hotel') || buildingType.includes('lodge') || buildingType.includes('resort')) {
+              propertyTypes.hotel++;
+            } else if (buildingType.includes('house') || buildingType.includes('villa') || buildingType.includes('duplex') || buildingType.includes('bungalow')) {
+              propertyTypes['real estate']++;
+            } else {
+              // Default to apartment if no specific type found
+              propertyTypes.apartment++;
+            }
+          });
+          
+          newStats.sellListings = sellCount;
+          newStats.rentListings = rentCount;
+          newStats.propertyTypes = propertyTypes;
+        } else {
+          // If no listings, set property types to 0
+          newStats.propertyTypes = {
+            apartment: 0,
+            'co-working': 0,
+            hotel: 0,
+            'real estate': 0
+          };
+          // Don't set hasRealData = true here since we have no actual listings
+        }
       }
       
-      // If we have real data, switch to it
-      setLoading(true);
-      
-      // Get sell listings
-      const sellListings = await listingsAPI.getListings({ type: 'Sell' });
-      const sellCount = sellListings.results?.length || sellListings.length || 0;
-      
-      // Get rent listings
-      const rentListings = await listingsAPI.getListings({ type: 'Rent' });
-      const rentCount = rentListings.results?.length || rentListings.length || 0;
-      
-      // Calculate unique customers
-      const uniqueCustomers = listings ? 
-        [...new Set(listings.map(item => item.created_by).filter(Boolean))] : [];
-      
-      // Calculate total revenue (sum of all listing prices)
-      const totalRevenue = listings?.reduce((sum, listing) => {
-        const price = parseFloat(listing.price?.toString().replace(/[^\d.-]/g, '') || 0);
-        return sum + price;
-      }, 0) || 0;
-      
-      // Count property types with improved categorization
-      const propertyTypes = {
-        apartment: 0,
-        'co-working': 0,
-        hotel: 0,
-        'real estate': 0
-      };
-      
-      listings.forEach(item => {
-        console.log('Processing item:', item.building_type, item.propertyType); // Debug log
-        
-        // Check multiple fields for property type
-        const buildingType = (item.building_type || item.propertyType || item.type || '').toLowerCase();
-        
-        if (buildingType.includes('apartment') || buildingType.includes('flat')) {
-          propertyTypes.apartment++;
-        } else if (buildingType.includes('co-working') || buildingType.includes('coworking') || buildingType.includes('office')) {
-          propertyTypes['co-working']++;
-        } else if (buildingType.includes('hotel') || buildingType.includes('lodge') || buildingType.includes('resort')) {
-          propertyTypes.hotel++;
-        } else if (buildingType.includes('house') || buildingType.includes('villa') || buildingType.includes('duplex') || buildingType.includes('bungalow')) {
-          propertyTypes['real estate']++;
-        } else {
-          // Default to apartment if no specific type found
-          propertyTypes.apartment++;
-        }
-      });
-      
-      console.log('Property types breakdown:', propertyTypes); // Debug log
-      
-      // Update stats with real data or zeros
-      setStats({
-        totalListings: listings.length || 0, // This is the total count of ALL properties
-        totalCustomers: uniqueCustomers.length || 0,
-        totalRevenue: totalRevenue || 0,
-        totalReports: 0,
-        sellListings: sellCount,
-        rentListings: rentCount,
-        propertyTypes
-      });
-      
-      setUsingDummyData(false);
+      // Always update stats (either with real data or zeros)
+      setStats(newStats);
+      setUsingRealData(hasRealData);
       
     } catch (error) {
       console.error('Error in fetchDashboardStats:', error);
-      // Keep dummy data on error
-      console.log('API error, keeping dummy data');
-      setUsingDummyData(true);
+      // Set to zero values on error
+      setStats(initialData);
+      setUsingRealData(false);
     } finally {
       setLoading(false);
     }
@@ -159,8 +186,8 @@ function AdminDashboard() {
             <div className="text-lg font-bold text-gray-900 leading-tight">
               {stats.totalListings.toLocaleString()}
             </div>
-            {usingDummyData && (
-              <p className="text-xs text-blue-500 mt-0.5 leading-tight">Demo data</p>
+            {!usingRealData && (
+              <p className="text-xs text-gray-400 mt-0.5 leading-tight">No data</p>
             )}
           </div>
           <div className="p-1.5 bg-green-50 rounded-lg flex-shrink-0">

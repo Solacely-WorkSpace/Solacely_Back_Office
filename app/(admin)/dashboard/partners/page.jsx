@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus, Eye } from 'lucide-react';
@@ -7,81 +7,59 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { adminAPI } from '@/utils/api/admin';
+import { toast } from 'react-hot-toast';
 
 function PartnersManagement() {
   const [activeTab, setActiveTab] = useState('Agent');
   const [searchTerm, setSearchTerm] = useState('');
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample data - replace with actual API calls
-  const partnersData = {
-    Agent: [
-      {
-        id: 1,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar1.jpg'
-      },
-      {
-        id: 2,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar2.jpg'
-      },
-      {
-        id: 3,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar3.jpg'
-      },
-      {
-        id: 4,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar4.jpg'
-      },
-      {
-        id: 5,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar5.jpg'
-      },
-      {
-        id: 6,
-        fullName: 'Samson John',
-        email: 'John@gmail.com',
-        phoneNumber: '+23489075623',
-        location: 'Lagos, Nigeria',
-        properties: 4,
-        avatar: '/images/avatar6.jpg'
+  // Fetch partners data from API
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        setLoading(true);
+        const response = await adminAPI.getPartners();
+        setPartners(response.data || []);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+        toast.error('Failed to load partners data');
+        setPartners([]);
+      } finally {
+        setLoading(false);
       }
-    ],
-    Agency: [],
-    Landlords: []
-  };
+    };
+
+    fetchPartners();
+  }, []);
+
+  // Filter partners based on business type and search term
+  const filteredPartners = partners.filter(partner => {
+    const matchesTab = activeTab === 'Agent' ? 
+      partner.business_type === 'individual' : 
+      activeTab === 'Agency' ? 
+        partner.business_type === 'agency' : 
+        activeTab === 'Landlords' ? 
+          partner.business_type === 'developer' || partner.business_type === 'other' : 
+          true;
+    
+    const matchesSearch = searchTerm === '' || 
+      partner.partner_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      partner.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      partner.phone_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      partner.location_region?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesTab && matchesSearch;
+  });
 
   const tabs = [
-    { id: 'Agent', label: 'Agent', count: partnersData.Agent.length },
-    { id: 'Agency', label: 'Agency', count: partnersData.Agency.length },
-    { id: 'Landlords', label: 'Landlords', count: partnersData.Landlords.length },
-    { id: 'Verification', label: 'Verification', count: 2, badge: true }
+    { id: 'Agent', label: 'Agent', count: partners.filter(p => p.business_type === 'individual').length },
+    { id: 'Agency', label: 'Agency', count: partners.filter(p => p.business_type === 'agency').length },
+    { id: 'Landlords', label: 'Landlords', count: partners.filter(p => p.business_type === 'developer' || p.business_type === 'other').length },
+    { id: 'Verification', label: 'Verification', count: 0, badge: true }
   ];
-
-  const currentData = partnersData[activeTab] || [];
 
   return (
     <div className="p-6 md:p-10">
@@ -141,6 +119,10 @@ function PartnersManagement() {
             <div className="p-6 text-center text-gray-500">
               Verification content coming soon...
             </div>
+          ) : loading ? (
+            <div className="p-6 text-center text-gray-500">
+              Loading partners data...
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -153,19 +135,18 @@ function PartnersManagement() {
                     <th className="text-left p-4 font-medium text-gray-700">Email</th>
                     <th className="text-left p-4 font-medium text-gray-700">Phone number</th>
                     <th className="text-left p-4 font-medium text-gray-700">Location</th>
-                    <th className="text-left p-4 font-medium text-gray-700">Properties</th>
                     <th className="text-left p-4 font-medium text-gray-700">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentData.length === 0 ? (
+                  {filteredPartners.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="p-8 text-center text-gray-500">
                         No {activeTab.toLowerCase()} found
                       </td>
                     </tr>
                   ) : (
-                    currentData.map((partner, index) => (
+                    filteredPartners.map((partner) => (
                       <tr key={partner.id} className="border-b hover:bg-gray-50/50 transition-colors">
                         <td className="p-4">
                           <input type="checkbox" className="rounded" />
@@ -173,20 +154,17 @@ function PartnersManagement() {
                         <td className="p-4">
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={partner.avatar} />
+                              <AvatarImage src="" />
                               <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                                {partner.fullName.split(' ').map(n => n[0]).join('')}
+                                {partner.partner_name.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium text-gray-900">{partner.fullName}</span>
+                            <span className="font-medium text-gray-900">{partner.partner_name}</span>
                           </div>
                         </td>
                         <td className="p-4 text-gray-600">{partner.email}</td>
-                        <td className="p-4 text-gray-600">{partner.phoneNumber}</td>
-                        <td className="p-4 text-gray-600">{partner.location}</td>
-                        <td className="p-4">
-                          <span className="font-medium text-gray-900">{partner.properties}</span>
-                        </td>
+                        <td className="p-4 text-gray-600">{partner.phone_number}</td>
+                        <td className="p-4 text-gray-600">{partner.location_region}</td>
                         <td className="p-4">
                           <Button 
                             variant="outline" 
@@ -207,16 +185,16 @@ function PartnersManagement() {
       </Card>
 
       {/* Pagination */}
-      {currentData.length > 0 && (
+      {filteredPartners.length > 0 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-600">
-            Showing 1 to 6 of 6 results
+            Showing 1 to {filteredPartners.length} of {filteredPartners.length} results
           </p>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" disabled>
               Previous
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled={filteredPartners.length < 10}>
               Next
             </Button>
           </div>

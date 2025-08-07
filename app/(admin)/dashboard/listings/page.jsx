@@ -3,7 +3,15 @@ import React, { useEffect, useState } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Pencil, Trash, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  Trash,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,7 +34,7 @@ function ListingsManagement() {
   const [filterStatus, setFilterStatus] = useState("");
   const [imageErrors, setImageErrors] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -37,14 +45,14 @@ function ListingsManagement() {
 
     // Listen for listing creation events
     const handleListingCreated = (event) => {
-      console.log('New listing created:', event.detail);
+      console.log("New listing created:", event.detail);
       fetchListings(false); // Refresh without loading spinner
     };
 
-    window.addEventListener('listingCreated', handleListingCreated);
-    
+    window.addEventListener("listingCreated", handleListingCreated);
+
     return () => {
-      window.removeEventListener('listingCreated', handleListingCreated);
+      window.removeEventListener("listingCreated", handleListingCreated);
     };
   }, [filterType, filterStatus]);
 
@@ -72,19 +80,19 @@ function ListingsManagement() {
       } else if (filterStatus === "inactive") {
         params.status = "sold";
       }
-  
+
       const data = await listingsAPI.getListings(params);
-      console.log('Fetched listings:', data);
+      console.log("Fetched listings:", data);
       const fetchedListings = data.results || data;
       setAllListings(fetchedListings);
       setListings(fetchedListings);
       setCurrentPage(1); // Reset to first page when fetching new data
-      
+
       // Clear image errors when refreshing data
       setImageErrors(new Set());
     } catch (error) {
-      console.error('Error fetching listings:', error);
-      toast.error('Failed to fetch listings');
+      console.error("Error fetching listings:", error);
+      toast.error("Failed to fetch listings");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -97,45 +105,49 @@ function ListingsManagement() {
       // Optimistic update
       const originalListings = [...listings];
       const originalAllListings = [...allListings];
-      setListings(prev => prev.filter(listing => listing.id !== id));
-      setAllListings(prev => prev.filter(listing => listing.id !== id));
-      
+      setListings((prev) => prev.filter((listing) => listing.id !== id));
+      setAllListings((prev) => prev.filter((listing) => listing.id !== id));
+
       try {
         await listingsAPI.deleteListing(id);
-        toast.success('Listing deleted successfully');
+        toast.success("Listing deleted successfully");
       } catch (error) {
         // Revert on error
         setListings(originalListings);
         setAllListings(originalAllListings);
-        console.error('Error deleting listing:', error);
-        toast.error('Failed to delete listing');
+        console.error("Error deleting listing:", error);
+        toast.error("Failed to delete listing");
       }
     }
   };
 
   // Enhanced status toggle with optimistic updates
   const toggleListingStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 'available' ? 'sold' : 'available';
-    
+    const newStatus = currentStatus === "available" ? "sold" : "available";
+
     // Optimistic update
     const originalListings = [...listings];
     const originalAllListings = [...allListings];
-    setListings(prev => prev.map(listing => 
-      listing.id === id ? { ...listing, status: newStatus } : listing
-    ));
-    setAllListings(prev => prev.map(listing => 
-      listing.id === id ? { ...listing, status: newStatus } : listing
-    ));
-    
+    setListings((prev) =>
+      prev.map((listing) =>
+        listing.id === id ? { ...listing, status: newStatus } : listing
+      )
+    );
+    setAllListings((prev) =>
+      prev.map((listing) =>
+        listing.id === id ? { ...listing, status: newStatus } : listing
+      )
+    );
+
     try {
       await listingsAPI.updateListing(id, { status: newStatus });
-      toast.success('Listing status updated');
+      toast.success("Listing status updated");
     } catch (error) {
       // Revert on error
       setListings(originalListings);
       setAllListings(originalAllListings);
-      console.error('Error updating listing status:', error);
-      toast.error('Failed to update listing status');
+      console.error("Error updating listing status:", error);
+      toast.error("Failed to update listing status");
     }
   };
 
@@ -148,39 +160,55 @@ function ListingsManagement() {
   const getImageUrl = (listing) => {
     // If this listing's image has failed before, use placeholder immediately
     if (imageErrors.has(listing.id)) {
-      return "/images/apartment-placeholder.jpg";
+      return "/icons/Logo.svg";
     }
-  
+
     // Check for images array first (current API structure)
-    if (listing?.images && Array.isArray(listing.images) && listing.images.length > 0) {
+    if (
+      listing?.images &&
+      Array.isArray(listing.images) &&
+      listing.images.length > 0
+    ) {
       const firstImage = listing.images[0];
-      
+
       // Check for original_image_url
-      if (firstImage.original_image_url && firstImage.original_image_url !== 'undefined') {
+      if (
+        firstImage.original_image_url &&
+        firstImage.original_image_url !== "undefined"
+      ) {
         return firstImage.original_image_url;
       }
-      
+
       // Check for image field with full URL
-      if (firstImage.image && firstImage.image.startsWith('http')) {
+      if (firstImage.image && firstImage.image.startsWith("http")) {
         return firstImage.image;
       }
-      
+
       // Check for image field with valid Cloudinary path
-      if (firstImage.image && firstImage.image !== 'undefined' && !firstImage.image.includes('undefined')) {
-        if (firstImage.image.startsWith('v1/') || firstImage.image.includes('/')) {
+      if (
+        firstImage.image &&
+        firstImage.image !== "undefined" &&
+        !firstImage.image.includes("undefined")
+      ) {
+        if (
+          firstImage.image.startsWith("v1/") ||
+          firstImage.image.includes("/")
+        ) {
           return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.image}`;
         }
       }
     }
-    
+
     // Return proper fallback image
-    return "/images/apartment-placeholder.jpg";
+    return "/icons/Logo.svg";
   };
-  
+
   // Handle image load errors
   const handleImageError = (listingId) => {
-    console.log(`Image failed to load for listing ${listingId}, switching to placeholder`);
-    setImageErrors(prev => new Set([...prev, listingId]));
+    console.log(
+      `Image failed to load for listing ${listingId}, switching to placeholder`
+    );
+    setImageErrors((prev) => new Set([...prev, listingId]));
   };
 
   const handleSearch = () => {
@@ -192,9 +220,12 @@ function ListingsManagement() {
 
     const filteredListings = allListings.filter(
       (listing) =>
-        (listing.location && listing.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (listing.address && listing.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (listing.title && listing.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (listing.location &&
+          listing.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (listing.address &&
+          listing.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (listing.title &&
+          listing.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (listing.price && listing.price.toString().includes(searchTerm))
     );
 
@@ -231,7 +262,7 @@ function ListingsManagement() {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -239,12 +270,12 @@ function ListingsManagement() {
     } else {
       const startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
     }
-    
+
     return pages;
   };
 
@@ -257,17 +288,15 @@ function ListingsManagement() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Listings Management</h1>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
           <Button asChild>
-            <Link href="/dashboard/add-new-listing">
-              Add New Listing
-            </Link>
+            <Link href="/dashboard/add-new-listing">Add New Listing</Link>
           </Button>
         </div>
       </div>
@@ -350,7 +379,7 @@ function ListingsManagement() {
                   currentPageListings.map((listing) => {
                     const imageUrl = getImageUrl(listing);
                     console.log(`Listing ${listing.id} image URL:`, imageUrl);
-                    
+
                     return (
                       <div
                         key={listing.id}
@@ -360,53 +389,90 @@ function ListingsManagement() {
                           <div className="relative h-16 w-16 rounded-md overflow-hidden">
                             <Image
                               src={imageUrl}
-                              alt={listing.location || listing.address || 'Property image'}
+                              alt={
+                                listing.location ||
+                                listing.address ||
+                                "Property image"
+                              }
                               fill
                               className="object-cover"
                               onError={() => handleImageError(listing.id)}
                             />
                           </div>
                           <div>
-                            <h3 className="font-medium text-lg" style={{color: '#3DC5A1'}}>
-                              ₦{listing.price ? Number(listing.price).toLocaleString() : '0'}
+                            <h3
+                              className="font-medium text-lg"
+                              style={{ color: "#3DC5A1" }}
+                            >
+                              ₦
+                              {listing.price
+                                ? Number(listing.price).toLocaleString()
+                                : "0"}
                             </h3>
                             <p className="text-sm text-gray-500 truncate max-w-[200px]">
-                              {listing.location || listing.address || 'Location not specified'}
+                              {listing.location ||
+                                listing.address ||
+                                "Location not specified"}
                             </p>
                             <p className="text-sm font-medium truncate max-w-[250px]">
-                              {listing.title || `${listing.building_type || 'Property'} - ${listing.number_of_bedrooms || 0} Bedroom`}
+                              {listing.title ||
+                                `${listing.building_type || "Property"} - ${
+                                  listing.number_of_bedrooms || 0
+                                } Bedroom`}
                             </p>
                             <div className="flex items-center space-x-2 mt-1">
                               <Badge
-                                variant={listing.status === 'available' ? "default" : "secondary"}
+                                variant={
+                                  listing.status === "available"
+                                    ? "default"
+                                    : "secondary"
+                                }
                               >
-                                {listing.status === 'available' ? "Available" : listing.status || 'Draft'}
+                                {listing.status === "available"
+                                  ? "Available"
+                                  : listing.status || "Draft"}
                               </Badge>
-                              <Badge variant="outline">{listing.listing_type || 'Sale'}</Badge>
+                              <Badge variant="outline">
+                                {listing.listing_type || "Sale"}
+                              </Badge>
                               <span className="text-xs text-gray-500">
-                                {listing.number_of_bedrooms || listing.bedroom || 0} bed • {listing.number_of_bathrooms || listing.bathroom || 0} bath •{" "}
-                                {listing.area || 'N/A'} sqft
+                                {listing.number_of_bedrooms ||
+                                  listing.bedroom ||
+                                  0}{" "}
+                                bed •{" "}
+                                {listing.number_of_bathrooms ||
+                                  listing.bathroom ||
+                                  0}{" "}
+                                bath • {listing.area || "N/A"} sqft
                               </span>
                             </div>
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <Button size="sm" variant="ghost" asChild>
-                            <Link href={`/dashboard/view-listing/${listing.id}`}>
+                            <Link
+                              href={`/dashboard/view-listing/${listing.id}`}
+                            >
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
                           <Button size="sm" variant="ghost" asChild>
-                            <Link href={`/dashboard/edit-listing/${listing.id}`}>
+                            <Link
+                              href={`/dashboard/edit-listing/${listing.id}`}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Link>
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => toggleListingStatus(listing.id, listing.status)}
+                            onClick={() =>
+                              toggleListingStatus(listing.id, listing.status)
+                            }
                           >
-                            {listing.status === 'available' ? "Mark as Sold" : "Mark as Available"}
+                            {listing.status === "available"
+                              ? "Mark as Sold"
+                              : "Mark as Available"}
                           </Button>
                           <Button
                             size="sm"
@@ -421,14 +487,14 @@ function ListingsManagement() {
                   })
                 )}
               </div>
-              
+
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                   <div className="text-sm text-gray-500">
                     Page {currentPage} of {totalPages}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -439,12 +505,14 @@ function ListingsManagement() {
                       <ChevronLeft className="h-4 w-4" />
                       Previous
                     </Button>
-                    
+
                     <div className="flex space-x-1">
                       {getPageNumbers().map((pageNum) => (
                         <Button
                           key={pageNum}
-                          variant={currentPage === pageNum ? "default" : "outline"}
+                          variant={
+                            currentPage === pageNum ? "default" : "outline"
+                          }
                           size="sm"
                           onClick={() => goToPage(pageNum)}
                           className="w-10"
@@ -453,7 +521,7 @@ function ListingsManagement() {
                         </Button>
                       ))}
                     </div>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"

@@ -1,61 +1,116 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-
-const data = [
-  { month: 'Jan', revenue: 400000 },
-  { month: 'Feb', revenue: 300000 },
-  { month: 'Mar', revenue: 500000 },
-  { month: 'Apr', revenue: 450000 },
-  { month: 'May', revenue: 600000 },
-  { month: 'Jun', revenue: 550000 },
-  { month: 'Jul', revenue: 700000 },
-  { month: 'Aug', revenue: 650000 },
-  { month: 'Sep', revenue: 800000 },
-  { month: 'Oct', revenue: 750000 },
-  { month: 'Nov', revenue: 900000 },
-  { month: 'Dec', revenue: 850000 }
-];
+import { adminAPI } from '@/utils/api/admin';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function RevenueChart() {
+  const [revenueData, setRevenueData] = useState({
+    monthly_data: [],
+    total_revenue: 0,
+    percentage_change: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      setLoading(true);
+      try {
+        const data = await adminAPI.getMonthlyRevenue();
+        // Add null check
+        if (data) {
+          setRevenueData(data);
+        } else {
+          setRevenueData({
+            monthly_data: [],
+            total_revenue: 0,
+            percentage_change: 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching monthly revenue:', error);
+        setRevenueData({
+          monthly_data: [],
+          total_revenue: 0,
+          percentage_change: 0
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+    
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchRevenueData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Format the total revenue as currency
+  const formattedTotalRevenue = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(revenueData.total_revenue);
+
+  // Determine the color for percentage change
+  const percentageColor = revenueData.percentage_change >= 0 ? '#3DC5A1' : '#EF4444';
+  const percentagePrefix = revenueData.percentage_change >= 0 ? '+' : '';
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Overall Revenue</CardTitle>
-        <div className="text-2xl font-bold">₦48,000,574.21</div>
-        <div className="text-sm" style={{color: '#3DC5A1'}}>+20%</div>
+        {loading ? (
+          <>
+            <Skeleton className="h-8 w-48 mb-1" />
+            <Skeleton className="h-4 w-16" />
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{formattedTotalRevenue}</div>
+            <div className="text-sm" style={{ color: percentageColor }}>
+              {percentagePrefix}{revenueData.percentage_change}%
+            </div>
+          </>
+        )}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={data}>
-            <XAxis 
-              dataKey="month" 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 12, fill: '#6B7280' }}
-            />
-            <YAxis hide />
-            <Tooltip 
-              formatter={(value) => [`₦${(value/1000).toFixed(0)}K`, 'Revenue']}
-              labelStyle={{ color: '#374151' }}
-              contentStyle={{ 
-                backgroundColor: '#6b7280', 
-                border: 'none', 
-                borderRadius: '8px',
-                color: 'white'
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="revenue" 
-              stroke="#3DC5A1" 
-              strokeWidth={3}
-              dot={false}
-              activeDot={{ r: 6, fill: '#3DC5A1' }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <Skeleton className="h-[200px] w-full" />
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={revenueData.monthly_data}>
+              <XAxis 
+                dataKey="month" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6B7280' }}
+              />
+              <YAxis hide />
+              <Tooltip 
+                formatter={(value) => [`₦${(value/1000).toFixed(0)}K`, 'Revenue']}
+                labelStyle={{ color: '#374151' }}
+                contentStyle={{ 
+                  backgroundColor: '#6b7280', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#3DC5A1" 
+                strokeWidth={3}
+                dot={false}
+                activeDot={{ r: 6, fill: '#3DC5A1' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );
