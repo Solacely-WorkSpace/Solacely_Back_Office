@@ -6,75 +6,76 @@ import { Input } from '@/components/ui/input';
 import { Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 
-function CommentsPage() {
+function AccountPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const router = useRouter();
   
-  // Comments data matching the image
-  const comments = [
+  // Account/Transaction data matching the image
+  const transactions = [
     {
       id: 1,
-      author: 'Benjamin Onyebuchi',
-      email: 'benbyxhub@gmail.com',
-      comment: 'I had excellent service from Green Reality. Thank you very help and support...',
-      inResponseTo: 'Home in Coral Gables',
+      name: 'Samson John',
+      email: 'John@gmail.com',
+      time: 'Jan 29, 2022',
+      timeDetail: 'at 08:00 PM',
+      location: 'Lagos',
+      property: 'Home in Coral Gables',
       propertyType: 'Apartment Building',
-      submittedOn: '2018/06/15',
-      submittedTime: 'at 12:03 pm',
+      amount: 'N4,000,000',
+      period: 'Annual',
+      status: 'Paid',
       avatar: '/images/UserDashboard/user1.jpg'
     },
     {
       id: 2,
-      author: 'Benjamin Onyebuchi',
-      email: 'benbyxhub@gmail.com',
-      comment: 'I had excellent service from Green Reality. Thank you very help and support...',
-      inResponseTo: 'Home in Coral Gables',
+      name: 'Samson John',
+      email: 'John@gmail.com',
+      time: 'Jan 29, 2022',
+      timeDetail: 'at 08:00 PM',
+      location: 'Lagos',
+      property: 'Home in Coral Gables',
       propertyType: 'Apartment Building',
-      submittedOn: '2018/06/15',
-      submittedTime: 'at 12:03 pm',
+      amount: 'N9,000,000',
+      period: 'Annual',
+      status: 'Failed',
       avatar: '/images/UserDashboard/user2.jpg'
+    },
+    {
+      id: 3,
+      name: 'Samson John',
+      email: 'John@gmail.com',
+      time: 'Jan 29, 2022',
+      timeDetail: 'at 08:00 PM',
+      location: 'Lagos',
+      property: 'Home in Coral Gables',
+      propertyType: 'Apartment Building',
+      amount: 'N4,300,000',
+      period: 'Annual',
+      status: 'Pending',
+      avatar: '/images/UserDashboard/user3.jpg'
     }
   ];
 
-  const handleViewComment = (commentId) => {
-    router.push(`/dashboard/comments/${commentId}`);
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'Paid': { color: 'bg-green-100 text-green-700', text: 'Paid' },
+      'Failed': { color: 'bg-red-100 text-red-700', text: 'Failed' },
+      'Pending': { color: 'bg-orange-100 text-orange-700', text: 'Pending' }
+    };
+    
+    const config = statusConfig[status] || statusConfig['Pending'];
+    return (
+      <Badge className={`${config.color} border-0 font-medium px-2 py-1 text-xs`}>
+        {config.text}
+      </Badge>
+    );
   };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Comments</h1>
-      </div>
-      
-      {/* Filter Tabs */}
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-1">
-          <span className="text-sm text-purple-600 font-medium">All</span>
-          <Badge className="bg-purple-100 text-purple-600 text-xs px-2 py-0.5 rounded-full border-0">
-            6
-          </Badge>
-        </div>
-        <div className="flex items-center space-x-1">
-          <span className="text-sm text-gray-600">Pending</span>
-          <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full border-0">
-            4
-          </Badge>
-        </div>
-        <div className="flex items-center space-x-1">
-          <span className="text-sm text-gray-600">Approved</span>
-          <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full border-0">
-            5
-          </Badge>
-        </div>
-        <div className="flex items-center space-x-1">
-          <span className="text-sm text-gray-600">Trash</span>
-          <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full border-0">
-            1
-          </Badge>
-        </div>
+        <h1 className="text-2xl font-semibold text-gray-900">Account</h1>
       </div>
       
       {/* Search Bar */}
@@ -99,7 +100,7 @@ function CommentsPage() {
                 <tr className="border-b border-gray-200 bg-gray-50/50">
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
-                      <span>Author</span>
+                      <span>Name/email</span>
                       <div className="flex flex-col">
                         <ChevronUp className="w-3 h-3 text-gray-400" />
                         <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
@@ -108,7 +109,7 @@ function CommentsPage() {
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
-                      <span>Comments</span>
+                      <span>Time</span>
                       <div className="flex flex-col">
                         <ChevronUp className="w-3 h-3 text-gray-400" />
                         <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
@@ -117,7 +118,7 @@ function CommentsPage() {
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
-                      <span>In response to</span>
+                      <span>Location</span>
                       <div className="flex flex-col">
                         <ChevronUp className="w-3 h-3 text-gray-400" />
                         <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
@@ -126,7 +127,25 @@ function CommentsPage() {
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
-                      <span>Submitted on</span>
+                      <span>Property</span>
+                      <div className="flex flex-col">
+                        <ChevronUp className="w-3 h-3 text-gray-400" />
+                        <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
+                      </div>
+                    </div>
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    <div className="flex items-center space-x-1">
+                      <span>Amount</span>
+                      <div className="flex flex-col">
+                        <ChevronUp className="w-3 h-3 text-gray-400" />
+                        <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
+                      </div>
+                    </div>
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    <div className="flex items-center space-x-1">
+                      <span>Status</span>
                       <div className="flex flex-col">
                         <ChevronUp className="w-3 h-3 text-gray-400" />
                         <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
@@ -139,42 +158,48 @@ function CommentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {comments.map((comment) => (
-                  <tr key={comment.id} className="hover:bg-gray-50/50 transition-colors">
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={comment.avatar} alt={comment.author} />
+                          <AvatarImage src={transaction.avatar} alt={transaction.name} />
                           <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
-                            {comment.author.split(' ').map(n => n[0]).join('')}
+                            {transaction.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900">{comment.author}</span>
-                          <span className="text-xs text-gray-500">{comment.email}</span>
+                          <span className="text-sm font-medium text-gray-900">{transaction.name}</span>
+                          <span className="text-xs text-gray-500">{transaction.email}</span>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <p className="text-sm text-gray-900 max-w-xs truncate">{comment.comment}</p>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900">{transaction.time}</span>
+                        <span className="text-xs text-gray-500">{transaction.timeDetail}</span>
+                      </div>
                     </td>
+                    <td className="py-4 px-4 text-sm text-gray-900">{transaction.location}</td>
                     <td className="py-4 px-4">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">{comment.inResponseTo}</span>
-                        <span className="text-xs text-gray-500">{comment.propertyType}</span>
+                        <span className="text-sm font-medium text-gray-900">{transaction.property}</span>
+                        <span className="text-xs text-gray-500">{transaction.propertyType}</span>
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">{comment.submittedOn}</span>
-                        <span className="text-xs text-gray-500">{comment.submittedTime}</span>
+                        <span className="text-sm font-medium text-gray-900">{transaction.amount}</span>
+                        <span className="text-xs text-gray-500">{transaction.period}</span>
                       </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      {getStatusBadge(transaction.status)}
                     </td>
                     <td className="py-4 px-4">
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleViewComment(comment.id)}
                         className="h-8 px-3 text-xs border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
                       >
                         View
@@ -215,4 +240,4 @@ function CommentsPage() {
   );
 }
 
-export default CommentsPage;
+export default AccountPage;

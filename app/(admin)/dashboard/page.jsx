@@ -148,49 +148,49 @@ function AdminDashboard() {
     }
   };
 
-  // Custom Total Properties Card Component
-  const TotalPropertiesCard = () => {
+  // Custom Total Properties Card Content
+  const TotalPropertiesContent = () => {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+      <div className="h-full flex flex-col justify-between">
         {/* First Row: Total Properties with Icon */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Properties</h3>
-            <div className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex-1">
+            <h3 className="text-xs font-medium text-gray-600 mb-0.5">Total Properties</h3>
+            <div className="text-lg font-bold text-gray-900 leading-tight">
               {stats.totalListings.toLocaleString()}
             </div>
             {usingDummyData && (
-              <p className="text-xs text-blue-500 mt-1">Demo data</p>
+              <p className="text-xs text-blue-500 mt-0.5 leading-tight">Demo data</p>
             )}
           </div>
-          <div className="p-3 bg-green-50 rounded-lg">
-            <Building className="h-6 w-6" style={{color: '#3DC5A1'}} />
+          <div className="p-1.5 bg-green-50 rounded-lg flex-shrink-0">
+            <Building className="h-4 w-4" style={{color: '#3DC5A1'}} />
           </div>
         </div>
         
         {/* Second Row: Property Types in 4 Columns */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-0.5 mt-1">
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">Apartment</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Apt</div>
+            <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes.apartment}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">Co-working</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Co-work</div>
+            <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes['co-working']}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">Hotel</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Hotel</div>
+            <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes.hotel}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">Real Estate</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Estate</div>
+            <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes['real estate']}
             </div>
           </div>
@@ -201,40 +201,39 @@ function AdminDashboard() {
 
   return (
     <div className="p-6">
-      {/* Stats Cards - Updated layout with more space for total properties */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-6">
-        {/* Smaller stat cards - each takes 1 column */}
+      {/* Stats Cards - Updated layout with consistent sizing */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <DashboardStats 
           title="Total Customers" 
           value={stats.totalCustomers.toLocaleString()} 
           subtitle={`${stats.totalCustomers} users`}
           change="+2.1%"
-          icon={<Users className="h-5 w-5" style={{color: '#521282'}} />} 
+          icon={<Users className="h-4 w-4" style={{color: '#521282'}} />} 
           loading={loading}
-          compact={true}
+          showDate={true}
         />
         <DashboardStats 
           title="Total Amount" 
           value={`₦${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-          subtitle={`Revenue`}
+          subtitle="Revenue"
           change="+0.8%"
-          icon={<DollarSign className="h-5 w-5" style={{color: '#3DC5A1'}} />} 
+          icon={<DollarSign className="h-4 w-4" style={{color: '#3DC5A1'}} />} 
           loading={loading}
-          compact={true}
+          showDate={true}
         />
         <DashboardStats 
           title="Total Reports" 
           value={stats.totalReports.toLocaleString()}
           subtitle="Reports"
           change="+1.2%"
-          icon={<BarChart className="h-5 w-5" style={{color: '#521282'}} />} 
+          icon={<BarChart className="h-4 w-4" style={{color: '#521282'}} />} 
           loading={loading}
-          compact={true}
+          showDate={true}
         />
-        {/* Spacious Total Properties Card spanning 4 columns for more modern look */}
-        <div className="col-span-1 md:col-span-1 lg:col-span-3">
-          <TotalPropertiesCard />
-        </div>
+        <DashboardStats 
+          loading={loading}
+          customContent={<TotalPropertiesContent />}
+        />
       </div>
       
       {/* Main Content Grid - Adjusted proportions */}

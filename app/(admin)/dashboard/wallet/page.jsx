@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, ChevronDown, Edit, Wallet, PiggyBank, Coins, CreditCard, Users, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import DashboardStats from '../_components/DashboardStats';
 
 export default function WalletPage() {
   const [activeTab, setActiveTab] = useState('pending');
@@ -167,104 +168,53 @@ export default function WalletPage() {
           </div>
 
           {/* Stats and TRC Distribution Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
             {/* Left Side - Statistics Cards (3 columns, 2 rows) */}
             <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-2 h-full">  {/* Added specific gap-x-2 and gap-y-2 */}
                 {/* Row 1 */}
-                {/* Total Wallet Balance */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">Total Wallet Balance</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <Wallet className="w-4 h-4 text-green-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2" style={{ color: '#3DC5A1' }}>{walletStats.totalBalance}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-600 text-xs">↗ +6%</span>
-                      <span className="text-red-600 text-xs">↘ -3%</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="Total Wallet Balance"
+                  value={walletStats.totalBalance}
+                  subtitle="↗ +6% ↘ -3%"
+                  icon={<Wallet className="w-4 h-4 text-green-600" />}
+                />
 
-                {/* Total Rent Savings */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">Total Rent Savings</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <PiggyBank className="w-4 h-4 text-blue-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2" style={{ color: '#3DC5A1' }}>{walletStats.totalSavings}</p>
-                    <p className="text-gray-500 text-xs">From 400 active tenants</p>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="Total Rent Savings"
+                  value={walletStats.totalSavings}
+                  subtitle="From 400 active tenants"
+                  icon={<PiggyBank className="w-4 h-4 text-blue-600" />}
+                />
 
-                {/* Total TRC Circulating */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">Total TRC Circulating</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <Coins className="w-4 h-4 text-green-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2">{walletStats.totalTRC}</p>
-                    <p className="text-gray-500 text-xs">600,000 worth earned via tasks</p>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="Total TRC Circulating"
+                  value={walletStats.totalTRC}
+                  subtitle="600,000 worth earned via tasks"
+                  icon={<Coins className="w-4 h-4 text-green-600" />}
+                />
 
                 {/* Row 2 */}
-                {/* Escrow Transactions */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">Escrow Transactions</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <CreditCard className="w-4 h-4 text-green-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2" style={{ color: '#3DC5A1' }}>{walletStats.escrowTransactions}</p>
-                    <p className="text-gray-500 text-xs">Pending landlord approval</p>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="Escrow Transactions"
+                  value={walletStats.escrowTransactions}
+                  subtitle="Pending landlord approval"
+                  icon={<CreditCard className="w-4 h-4 text-green-600" />}
+                />
 
-                {/* Auto-Save Enabled */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">Auto-Save Enabled</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <Users className="w-4 h-4 text-blue-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2">{walletStats.autoSaveEnabled}</p>
-                    <p className="text-gray-500 text-xs">₦1.5M saved automatically</p>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="Auto-Save Enabled"
+                  value={walletStats.autoSaveEnabled}
+                  subtitle="₦1.5M saved automatically"
+                  icon={<Users className="w-4 h-4 text-blue-600" />}
+                />
 
-                {/* TRC Redeemed to Wallet */}
-                <Card className="bg-white border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    {/* Header with title on left and icon on right */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-600 text-xs">TRC Redeemed to Wallet</span>
-                      <div className="p-1.5 bg-gray-50 rounded-lg">
-                        <BarChart3 className="w-4 h-4 text-green-600" />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 mb-2" style={{ color: '#3DC5A1' }}>{walletStats.trcRedeemed}</p>
-                    <p className="text-gray-500 text-xs">From 80,000 TRC earned</p>
-                  </CardContent>
-                </Card>
+                <DashboardStats
+                  title="TRC Redeemed to Wallet"
+                  value={walletStats.trcRedeemed}
+                  subtitle="From 80,000 TRC earned"
+                  icon={<BarChart3 className="w-4 h-4 text-green-600" />}
+                />
               </div>
             </div>
 

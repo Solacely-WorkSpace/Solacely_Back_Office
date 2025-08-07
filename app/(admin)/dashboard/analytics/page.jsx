@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { listingsAPI } from '@/utils/api/listings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DashboardStats from '../_components/DashboardStats';
+import { Building, TrendingUp, DollarSign, BarChart } from 'lucide-react';
 
 function Analytics() {
   const [stats, setStats] = useState({
@@ -108,67 +110,41 @@ function Analytics() {
       <h1 className="text-3xl font-bold mb-6">Analytics Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Listings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <div className="text-2xl font-bold">{stats.totalListings}</div>
-            )}
-          </CardContent>
-        </Card>
+        <DashboardStats
+          title="Total Listings"
+          value={stats.totalListings.toLocaleString()}
+          subtitle="Properties"
+          change="+5.2%"
+          icon={<Building className="h-4 w-4 text-purple-600" />}
+          loading={loading}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats.activeListings}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalListings > 0 
-                    ? `${Math.round((stats.activeListings / stats.totalListings) * 100)}% of total`
-                    : '0% of total'}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <DashboardStats
+          title="Active Listings"
+          value={stats.activeListings.toLocaleString()}
+          subtitle={`${stats.totalListings > 0 ? Math.round((stats.activeListings / stats.totalListings) * 100) : 0}% of total`}
+          change="+2.1%"
+          icon={<TrendingUp className="h-4 w-4 text-green-600" />}
+          loading={loading}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <div className="text-2xl font-bold">${stats.averagePrice.toLocaleString()}</div>
-            )}
-          </CardContent>
-        </Card>
+        <DashboardStats
+          title="Average Price"
+          value={`$${stats.averagePrice.toLocaleString()}`}
+          subtitle="Per property"
+          change="+1.8%"
+          icon={<DollarSign className="h-4 w-4 text-blue-600" />}
+          loading={loading}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Listing Types</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats.sellListings}/{stats.rentListings}</div>
-                <p className="text-xs text-muted-foreground">Sell/Rent</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <DashboardStats
+          title="Listing Types"
+          value={`${stats.sellListings}/${stats.rentListings}`}
+          subtitle="Sell/Rent"
+          change="+0.5%"
+          icon={<BarChart className="h-4 w-4 text-orange-600" />}
+          loading={loading}
+        />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

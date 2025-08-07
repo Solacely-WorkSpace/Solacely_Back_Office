@@ -56,7 +56,7 @@ const spaceItems = [
 const sidebarItems = [
   { 
     name: 'Customers', 
-    href: '/dashboard/users', 
+    href: '/dashboard/customers', // Changed from '/dashboard/users' to '/dashboard/customers'
     icon: '/icons/3 User.svg',
     selectedIcon: '/icons/User.svg',
   },
@@ -80,13 +80,13 @@ const sidebarItems = [
   },
   { 
     name: 'Account', 
-    href: '/dashboard/ac', 
+    href: '/dashboard/account', 
     icon: Setting,
     selectedIcon: SettingSelected
   },
   { 
     name: 'User Mgt', 
-    href: '/dashboard/logs', 
+    href: '/dashboard/users', // Changed this to point to users page for user management
     icon: UserMgt,
     selectedIcon: '/icons/UserDashboard/security.svg'
   },
