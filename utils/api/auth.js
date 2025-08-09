@@ -5,7 +5,10 @@ export const authAPI = {
   verifyEmail: (otpData) => apiClient.post('/api/v1/verify-email/', otpData),
   resendOTP: (email) => apiClient.post('/api/v1/resend-otp/', { email }),
   login: (credentials) => apiClient.post('/api/v1/admin/login/', credentials),
-  logout: () => apiClient.post('/api/v1/admin/logout/'),
+  logout: () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    return apiClient.post('/api/v1/logout/', { refresh: refreshToken });
+  },
   refreshToken: (refreshToken) => apiClient.post('/api/v1/admin/token/refresh/', { refresh: refreshToken }),
   verify2FA: (data) => apiClient.post('/api/v1/admin/verify-2fa/', data),
   getProfile: () => apiClient.get('/api/v1/profile/'),

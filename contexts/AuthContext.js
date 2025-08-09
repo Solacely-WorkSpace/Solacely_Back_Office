@@ -23,7 +23,46 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+    
+    // Listen for auth logout events
+    const handleAuthLogout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      toast.info('Session expired. Please sign in again.');
+    };
+    
+    window.addEventListener('auth:logout', handleAuthLogout);
+    
+    // Set up proactive token refresh
+    const refreshInterval = setInterval(async () => {
+      const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      if (token && refreshToken && isAuthenticated) {
+        try {
+          // Try to refresh token proactively (every 10 minutes)
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/token/refresh/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: refreshToken })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('access_token', data.access);
+            document.cookie = `access_token=${data.access}; path=/; max-age=${60*60*24*7}; SameSite=Strict`;
+          }
+        } catch (error) {
+          console.error('Proactive token refresh failed:', error);
+        }
+      }
+    }, 10 * 60 * 1000); // Every 10 minutes
+    
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout);
+      clearInterval(refreshInterval);
+    };
+  }, [isAuthenticated]);
 
   const checkAuthStatus = async () => {
     try {
@@ -83,8 +122,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('access_token', response.token || response.access);
       localStorage.setItem('refresh_token', response.refresh_token || response.refresh);
       
-      // Also set a cookie for the middleware
-      document.cookie = `access_token=${response.token || response.access}; path=/; max-age=${60*60*24*7}`; // 7 days
+      // Set a cookie for the middleware with SameSite=Strict
+      document.cookie = `access_token=${response.token || response.access}; path=/; max-age=${60*60*24*7}; SameSite=Strict`;
       
       const userData = await authAPI.getProfile();
       setUser(userData);
@@ -94,6 +133,33 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       toast.error(error.message || 'Login failed');
       throw error;
+    }
+  };
+
+  const logout = async (redirect = true) => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        await authAPI.logout();
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if API call fails
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      
+      // Clear the cookie with proper attributes
+      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+      
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      if (redirect) {
+        toast.success('Logged out successfully');
+        // Only redirect if explicitly requested
+        window.location.href = '/sign-in';
+      }
     }
   };
 
@@ -130,23 +196,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      
-      // Also clear the cookie
-      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      
-      setUser(null);
-      setIsAuthenticated(false);
-      toast.success('Logged out successfully');
-    }
-  };
+  
 
   const updateProfile = async (profileData) => {
     try {

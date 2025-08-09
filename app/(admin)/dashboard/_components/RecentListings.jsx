@@ -142,13 +142,14 @@ function RecentListings() {
                   className="block"
                 >
                   <div className="flex gap-6 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <div className="relative h-32 w-48 md:h-36 md:w-56 rounded-lg overflow-hidden flex-shrink-0">
+                    {/* Wider Image Container - Full image display */}
+                    <div className="relative h-32 w-56 md:h-36 md:w-64 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                       {isPlaceholder ? (
                         <Image
                           src="/icons/Logo.svg"
                           alt="Property placeholder"
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           priority={false}
                         />
                       ) : (
@@ -156,7 +157,7 @@ function RecentListings() {
                           src={imageUrl}
                           alt={listing.location || "Property image"}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           onError={() => handleImageError(listing.id)}
                           priority={false}
                         />
@@ -164,15 +165,24 @@ function RecentListings() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
+                      {/* Location at the top */}
+                      <div className="flex items-center text-sm text-gray-500 mb-2">
+                        <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {listing.location || "Location not specified"}
+                        </span>
+                      </div>
+
+                      {/* Apartment title */}
+                      <h3 className="font-semibold text-gray-900 text-lg mb-3 line-clamp-1">
                         {listing.title ||
                           `${listing.building_type || "Property"} - ${
                             listing.number_of_bedrooms || 0
                           } Bedroom`}
                       </h3>
 
-                      {/* Bed/Bath section */}
-                      <div className="flex flex-wrap gap-3 mb-3">
+                      {/* Bed, Bath, and Sqft in one line */}
+                      <div className="flex flex-wrap gap-4 mb-3">
                         {listing.number_of_bedrooms && (
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <BedDouble className="h-4 w-4" />
@@ -185,28 +195,18 @@ function RecentListings() {
                             <span>{listing.number_of_bathrooms} Bath</span>
                           </div>
                         )}
-                        {listing.amenities && (
+                        {listing.area_size_sqm && (
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Home className="h-4 w-4" />
-                            <span className="capitalize">
-                              {listing.amenities.split(",")[0]?.trim()}
-                            </span>
+                            <span>{listing.area_size_sqm} sqft</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Full location section - moved between bed/bath and price */}
-                      <div className="flex items-center text-sm text-gray-500 mb-3">
-                        <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">
-                          {listing.location || "Location not specified"}
-                        </span>
-                      </div>
-
-                      {/* Price section */}
-                      <div className="flex items-center gap-3 mb-2">
+                      {/* Price section at the bottom */}
+                      <div className="flex items-center gap-3">
                         <span
-                          className="text-lg font-bold"
+                          className="text-xl font-bold"
                           style={{ color: "#3DC5A1" }}
                         >
                           ₦

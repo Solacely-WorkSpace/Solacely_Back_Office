@@ -14,13 +14,13 @@ class ApiClient {
       },
       ...options,
     };
-
+  
     // Add JWT token if available
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
+  
     try {
       const response = await fetch(url, config);
       
@@ -31,11 +31,14 @@ class ApiClient {
           config.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
           return fetch(url, config).then(res => res.json());
         } else {
-          // Redirect to login
+          // Don't auto-redirect, let the app handle it
           if (typeof window !== 'undefined') {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
-            window.location.href = '/sign-in';
+            document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+            
+            // Dispatch a custom event instead of redirecting
+            window.dispatchEvent(new CustomEvent('auth:logout'));
           }
           throw new Error('Authentication failed');
         }
@@ -57,20 +60,35 @@ class ApiClient {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
-
+  
       const response = await fetch(`${this.baseURL}/api/v1/token/refresh/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken })
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('access_token', data.access);
+        
+        // Also update the cookie for middleware with SameSite=Strict
+        document.cookie = `access_token=${data.access}; path=/; max-age=${60*60*24*7}; SameSite=Strict`;
+        
         return true;
       }
+      
+      // Clear both localStorage and cookies on refresh failure
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+      
       return false;
     } catch {
+      // Clear both localStorage and cookies on error
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+      
       return false;
     }
   }

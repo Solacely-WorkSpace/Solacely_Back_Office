@@ -1,20 +1,20 @@
 "use client";
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
-  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
@@ -24,17 +24,17 @@ export default function SignInPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const result = await login(formData);
       if (result.requires2FA) {
         setShowTwoFactor(true);
       } else {
         // Redirect to admin dashboard
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     } finally {
       setLoading(false);
     }
@@ -43,13 +43,13 @@ export default function SignInPage() {
   const handleVerify2FA = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await verify2FA(twoFactorCode);
       // Redirect to admin dashboard
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (error) {
-      console.error('2FA verification failed:', error);
+      console.error("2FA verification failed:", error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function SignInPage() {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -72,7 +72,7 @@ export default function SignInPage() {
             <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-400 rounded-full opacity-20 translate-x-1/2 translate-y-1/2"></div>
             <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-300 rounded-full opacity-10"></div>
           </div>
-          
+
           <div className="relative z-10 w-full h-full flex items-center justify-center">
             <Image
               src="/Left-paw.png"
@@ -88,14 +88,21 @@ export default function SignInPage() {
         <main className="flex items-center justify-center px-8 py-8 sm:px-12 lg:col-span-5 lg:px-16 lg:py-12 xl:col-span-5">
           <div className="max-w-xl lg:max-w-3xl w-full">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h2>
-              <p className="text-gray-600">Welcome back! Please enter your details.</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Sign in to your account
+              </h2>
+              <p className="text-gray-600">
+                Welcome back! Please enter your details.
+              </p>
             </div>
 
             {!showTwoFactor ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Email address
                   </Label>
                   <Input
@@ -111,14 +118,17 @@ export default function SignInPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Password
                   </Label>
                   <div className="relative">
                     <Input
                       id="password"
                       name="password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       required
                       value={formData.password}
                       onChange={handleChange}
@@ -151,7 +161,7 @@ export default function SignInPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+                  className="w-full bg-[#521282] hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
                 >
                   {loading ? (
                     <>
@@ -159,14 +169,17 @@ export default function SignInPage() {
                       Signing in...
                     </>
                   ) : (
-                    'Sign in'
+                    "Sign in"
                   )}
                 </Button>
               </form>
             ) : (
               <form onSubmit={handleVerify2FA} className="space-y-6">
                 <div>
-                  <Label htmlFor="twoFactorCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label
+                    htmlFor="twoFactorCode"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Two-Factor Authentication Code
                   </Label>
                   <Input
@@ -184,7 +197,7 @@ export default function SignInPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+                  className="w-full bg-[#521282] hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
                 >
                   {loading ? (
                     <>
@@ -192,15 +205,13 @@ export default function SignInPage() {
                       Verifying...
                     </>
                   ) : (
-                    'Verify'
+                    "Verify"
                   )}
                 </Button>
               </form>
             )}
 
-            <div className="mt-6 text-center">
-            
-            </div>
+            <div className="mt-6 text-center"></div>
           </div>
         </main>
       </div>

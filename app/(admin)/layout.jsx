@@ -58,13 +58,13 @@ const sidebarItems = [
     name: 'Customers', 
     href: '/dashboard/customers', // Changed from '/dashboard/users' to '/dashboard/customers'
     icon: '/icons/3 User.svg',
-    selectedIcon: '/icons/User.svg',
+    selectedIcon: '/icons/3 User.svg', // Changed from '/icons/User.svg' to match the unselected icon
   },
   { 
     name: 'Partners', 
     href: '/dashboard/partners', 
     icon: '/icons/Iconly.svg',
-    selectedIcon: '/icons/UserDashboard/connect.svg'
+    selectedIcon: '/icons/Iconly.svg' // Changed from '/icons/UserDashboard/connect.svg' to match the unselected icon
   },
   { 
     name: 'Wallet', 
@@ -88,7 +88,7 @@ const sidebarItems = [
     name: 'User Mgt', 
     href: '/dashboard/users', // Changed this to point to users page for user management
     icon: UserMgt,
-    selectedIcon: '/icons/UserDashboard/security.svg'
+    selectedIcon: UserMgt // Changed from '/icons/UserDashboard/security.svg' to match the unselected icon
   },
 ];
 
@@ -172,11 +172,11 @@ export default function AdminLayout({ children }) {
   return (
     <div className="flex h-screen ">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-60  border-r transform ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-60 bg-white border-r transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         {/* Logo Section */}
-        <div className="flex items-center justify-between h-20 px-6 ">
+        <div className="flex items-center justify-between h-20 px-6 bg-white">
           <Link href="/" className="flex items-center ">
             <Image
               src={Logo}
@@ -204,7 +204,7 @@ export default function AdminLayout({ children }) {
             className={`flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
               pathname === '/dashboard' && activeItem !== 'spaces'
                 ? 'bg-primary text-white'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             <Image
@@ -225,7 +225,7 @@ export default function AdminLayout({ children }) {
                 className={`flex items-center justify-between w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
                   spacesOpen || isSpaceActive || activeItem === 'spaces'
                     ? 'bg-primary text-white'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <div className="flex items-center">
@@ -241,7 +241,13 @@ export default function AdminLayout({ children }) {
                 {spacesOpen ? (
                   <ChevronDown className="h-4 w-4" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <Image
+                    src="/Iconly.png"
+                    alt="Expand"
+                    width={16}
+                    height={16}
+                    className="h-4 w-4 transition-transform duration-200"
+                  />
                 )}
               </button>
             </CollapsibleTrigger>
@@ -264,7 +270,7 @@ export default function AdminLayout({ children }) {
                       className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors w-full ${
                         pathname === item.href
                           ? 'text-primary'
-                          : 'text-gray-500 hover:text-primary'
+                          : 'text-gray-400 hover:text-primary'
                       }`}
                     >
                       {item.name}
@@ -288,7 +294,7 @@ export default function AdminLayout({ children }) {
                 className={`flex items-center px-3 py-5 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary text-white'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <Image
@@ -296,7 +302,9 @@ export default function AdminLayout({ children }) {
                   alt={item.name}
                   width={20}
                   height={20}
-                  className="mr-3 w-5 h-5"
+                  className={`mr-3 w-5 h-5 transition-all duration-200 ${
+                    isActive ? 'brightness-0 invert' : ''
+                  }`}
                 />
                 {item.name}
               </Link>
@@ -322,7 +330,7 @@ export default function AdminLayout({ children }) {
               {/* Updated Welcome Message Format */}
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Hi {user?.firstName || 'Admin'}
+                  Hi {user?.full_name?.split(' ')[0] || 'Admin'}
                 </h2>
                 <span className="text-sm text-gray-500">Welcome back</span>
               </div>
@@ -407,13 +415,15 @@ export default function AdminLayout({ children }) {
                   <Button variant="ghost" className="flex items-center space-x-3 hover:bg-gray-50">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.imageUrl} />
-                      <AvatarFallback>{user?.firstName?.charAt(0) || 'A'}</AvatarFallback>
+                      <AvatarFallback>{user?.full_name?.charAt(0) || 'A'}</AvatarFallback>
                     </Avatar>
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-gray-900">
-                        {user?.firstName} {user?.lastName}
+                        {user?.full_name?.split(' ').map((name, index, arr) => 
+                          index === 0 ? name : (index === arr.length - 1 ? ` ${name.charAt(0)}` : '')
+                        ).join('') || 'Admin'}
                       </p>
-                      <p className="text-xs text-gray-500">Administrator</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>

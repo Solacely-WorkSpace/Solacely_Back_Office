@@ -1,21 +1,21 @@
 "use client";
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    password_confirm: ''
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    password_confirm: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,24 +25,24 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.password_confirm) {
-      toast.error('Passwords do not match');
+      toast.error("Passwords do not match");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       await register({
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function SignUpPage() {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -65,7 +65,7 @@ export default function SignUpPage() {
             <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-400 rounded-full opacity-20 translate-x-1/2 translate-y-1/2"></div>
             <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-300 rounded-full opacity-10"></div>
           </div>
-          
+
           <div className="relative z-10 text-center text-white px-8">
             <Image
               src="/Left-paw.png"
@@ -75,7 +75,10 @@ export default function SignUpPage() {
               className="mx-auto mb-8 drop-shadow-2xl"
             />
             <h1 className="text-4xl font-bold mb-4">Join Solacely Today</h1>
-            <p className="text-xl opacity-90">Create your account and start your journey to finding the perfect home</p>
+            <p className="text-xl opacity-90">
+              Create your account and start your journey to finding the perfect
+              home
+            </p>
           </div>
         </section>
 
@@ -83,14 +86,21 @@ export default function SignUpPage() {
         <main className="flex items-center justify-center px-8 py-8 sm:px-12 lg:col-span-5 lg:px-16 lg:py-12 xl:col-span-5">
           <div className="max-w-xl lg:max-w-3xl w-full">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
-              <p className="text-gray-600">Join thousands of users finding their perfect home.</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Create your account
+              </h2>
+              <p className="text-gray-600">
+                Join thousands of users finding their perfect home.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label
+                    htmlFor="first_name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     First Name
                   </Label>
                   <Input
@@ -105,7 +115,10 @@ export default function SignUpPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label
+                    htmlFor="last_name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Last Name
                   </Label>
                   <Input
@@ -122,7 +135,10 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <Label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email address
                 </Label>
                 <Input
@@ -138,14 +154,17 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <Label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.password}
                     onChange={handleChange}
@@ -167,14 +186,17 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <Label htmlFor="password_confirm" className="block text-sm font-medium text-gray-700 mb-2">
+                <Label
+                  htmlFor="password_confirm"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Confirm Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="password_confirm"
                     name="password_confirm"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     value={formData.password_confirm}
                     onChange={handleChange}
@@ -198,7 +220,7 @@ export default function SignUpPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+                className="w-full bg-[#521282] hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
               >
                 {loading ? (
                   <>
@@ -206,15 +228,18 @@ export default function SignUpPage() {
                     Creating account...
                   </>
                 ) : (
-                  'Create account'
+                  "Create account"
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link href="/sign-in" className="font-medium text-purple-600 hover:text-purple-500">
+                Already have an account?{" "}
+                <Link
+                  href="/sign-in"
+                  className="font-medium text-purple-600 hover:text-purple-500"
+                >
                   Sign in
                 </Link>
               </p>

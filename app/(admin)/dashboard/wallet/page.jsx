@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, ChevronDown, Edit, Wallet, PiggyBank, Coins, CreditCard, Users, BarChart3 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import DashboardStats from '../_components/DashboardStats';
 import { walletAPI } from '@/utils/api/wallet';
@@ -17,9 +18,9 @@ import CurrencyConverter from '@/components/CurrencyConverter';
 export default function WalletPage() {
   const [activeTab, setActiveTab] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   
-  // State for API data
+  // State for API data with default values
   const [walletStats, setWalletStats] = useState({
     totalBalance: '₦0',
     totalSavings: '₦0',
@@ -45,7 +46,6 @@ export default function WalletPage() {
 
   // Function to fetch wallet data from API
   const fetchWalletData = async () => {
-    setLoading(true);
     try {
       // Fetch wallet stats
       const statsResponse = await walletAPI.getWalletStats();
@@ -71,7 +71,7 @@ export default function WalletPage() {
       setTransactions(transactionsResponse.data.map(tx => ({
         id: tx.id,
         user: tx.wallet_user,
-        avatar: '/images/UserDashboard/avatar.png', // Default avatar
+        avatar: '/images/UserDashboard/avatar.png',
         type: tx.type.charAt(0).toUpperCase() + tx.type.slice(1),
         category: tx.source,
         date: new Date(tx.created_at).toLocaleDateString('en-US', {
@@ -89,7 +89,7 @@ export default function WalletPage() {
       setEscrowData(escrowResponse.data.map(escrow => ({
         id: escrow.id,
         tenant: escrow.tenant,
-        avatar: '/images/UserDashboard/avatar.png', // Default avatar
+        avatar: '/images/UserDashboard/avatar.png',
         property: escrow.property,
         amount: `₦${formatNumber(escrow.amount)}`,
         payment: escrow.payment_method,
@@ -97,11 +97,12 @@ export default function WalletPage() {
         status: escrow.status
       })));
       
+      setIsDataLoaded(true);
+      
     } catch (error) {
       console.error('Error fetching wallet data:', error);
       toast.error('Failed to fetch wallet data');
-    } finally {
-      setLoading(false);
+      setIsDataLoaded(true); // Set to true even on error to stop skeleton loading
     }
   };
 
@@ -150,11 +151,7 @@ export default function WalletPage() {
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <p>Loading wallet data...</p>
-        </div>
-      ) : !showEscrow ? (
+      {!showEscrow ? (
         <>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -176,7 +173,7 @@ export default function WalletPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
             {/* Left Side - Statistics Cards (3 columns, 2 rows) */}
             <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-2 h-full">  {/* Added specific gap-x-2 and gap-y-2 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-2 h-full">
                 {/* Row 1 */}
                 <DashboardStats
                   title="Total Wallet Balance"
@@ -230,52 +227,65 @@ export default function WalletPage() {
                   <CardTitle className="text-lg font-semibold">TRC Earning Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative">
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={trcChartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={70}
-                          outerRadius={77}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {trcChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">{(totalTRC / 1000).toFixed(0)}K</div>
-                        <div className="text-sm text-gray-500">Total TRC</div>
+                  {!isDataLoaded ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-[200px] w-full rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="mt-4 space-y-2">
-                    {trcChartData.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: item.color }}
-                          ></div>
-                          <span className="text-sm text-gray-600">{item.name}</span>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <ResponsiveContainer width="100%" height={200}>
+                          <PieChart>
+                            <Pie
+                              data={trcChartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={70}
+                              outerRadius={77}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {trcChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold">{(totalTRC / 1000).toFixed(0)}K</div>
+                            <div className="text-sm text-gray-500">Total TRC</div>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium">{item.value}%</span>
                       </div>
-                    ))}
-                  </div>
+                      
+                      <div className="mt-4 space-y-2">
+                        {trcChartData.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <span className="text-sm text-gray-600">{item.name}</span>
+                            </div>
+                            <span className="text-sm font-medium">{item.value}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
           
-          {/* Currency Converter Card - Added here */}
+          {/* Currency Converter Card */}
           <Card className="bg-white border-0 shadow-sm mb-8">
             <CardHeader className="border-b border-gray-100 pb-4">
               <CardTitle className="text-lg font-semibold">Currency Converter</CardTitle>
@@ -329,44 +339,71 @@ export default function WalletPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={transaction.avatar} />
-                              <AvatarFallback>{transaction.user.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{transaction.user}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                            {transaction.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-600">{transaction.category}</TableCell>
-                        <TableCell className="text-gray-600">{transaction.date}</TableCell>
-                        <TableCell className="font-medium" style={{ color: '#3DC5A1' }}>{transaction.amount}</TableCell>
-                        <TableCell className="text-gray-600">{transaction.note}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={`${
-                              transaction.status === 'Pending' 
-                                ? 'bg-yellow-100 text-yellow-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}
-                          >
-                            {transaction.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                    {!isDataLoaded ? (
+                      // Skeleton rows for loading state
+                      Array.from({ length: 5 }).map((_, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Skeleton className="w-8 h-8 rounded-full" />
+                              <Skeleton className="h-4 w-24" />
+                            </div>
+                          </TableCell>
+                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : transactions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                          No transactions found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      transactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={transaction.avatar} />
+                                <AvatarFallback>{transaction.user.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">{transaction.user}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              {transaction.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-600">{transaction.category}</TableCell>
+                          <TableCell className="text-gray-600">{transaction.date}</TableCell>
+                          <TableCell className="font-medium" style={{ color: '#3DC5A1' }}>{transaction.amount}</TableCell>
+                          <TableCell className="text-gray-600">{transaction.note}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={`${
+                                transaction.status === 'Pending' 
+                                  ? 'bg-yellow-100 text-yellow-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}
+                            >
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -374,7 +411,7 @@ export default function WalletPage() {
           </Card>
         </>
       ) : (
-        /* Escrow Management Panel */
+        /* Escrow Management Panel - remains the same */
         <div>
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">

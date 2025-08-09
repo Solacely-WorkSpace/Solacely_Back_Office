@@ -6,6 +6,7 @@ import { Search, Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { adminAPI } from '@/utils/api/admin';
 import { toast } from 'react-hot-toast';
@@ -14,21 +15,20 @@ function PartnersManagement() {
   const [activeTab, setActiveTab] = useState('Agent');
   const [searchTerm, setSearchTerm] = useState('');
   const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Fetch partners data from API
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        setLoading(true);
         const response = await adminAPI.getPartners();
         setPartners(response.data || []);
+        setIsDataLoaded(true);
       } catch (error) {
         console.error('Error fetching partners:', error);
         toast.error('Failed to load partners data');
         setPartners([]);
-      } finally {
-        setLoading(false);
+        setIsDataLoaded(true);
       }
     };
 
@@ -60,6 +60,33 @@ function PartnersManagement() {
     { id: 'Landlords', label: 'Landlords', count: partners.filter(p => p.business_type === 'developer' || p.business_type === 'other').length },
     { id: 'Verification', label: 'Verification', count: 0, badge: true }
   ];
+
+  // Skeleton component for table rows
+  const SkeletonRow = () => (
+    <tr className="border-b">
+      <td className="p-4">
+        <Skeleton className="h-4 w-4 rounded" />
+      </td>
+      <td className="p-4">
+        <div className="flex items-center space-x-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-4 w-40" />
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-4 w-28" />
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-4 w-24" />
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-8 w-16 rounded" />
+      </td>
+    </tr>
+  );
 
   return (
     <div className="p-6 md:p-10">
@@ -119,10 +146,6 @@ function PartnersManagement() {
             <div className="p-6 text-center text-gray-500">
               Verification content coming soon...
             </div>
-          ) : loading ? (
-            <div className="p-6 text-center text-gray-500">
-              Loading partners data...
-            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -139,7 +162,12 @@ function PartnersManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPartners.length === 0 ? (
+                  {!isDataLoaded ? (
+                    // Show skeleton rows while loading
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <SkeletonRow key={index} />
+                    ))
+                  ) : filteredPartners.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="p-8 text-center text-gray-500">
                         No {activeTab.toLowerCase()} found
@@ -185,7 +213,7 @@ function PartnersManagement() {
       </Card>
 
       {/* Pagination */}
-      {filteredPartners.length > 0 && (
+      {isDataLoaded && filteredPartners.length > 0 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-600">
             Showing 1 to {filteredPartners.length} of {filteredPartners.length} results

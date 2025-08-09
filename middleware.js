@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
-  // We can't access localStorage in middleware (server-side)
-  // So we need to set a cookie when logging in
   const token = request.cookies.get('access_token')?.value;
   const { pathname } = request.nextUrl;
-
+  
+  // Get redirect count to detect loops
+  const redirectCount = parseInt(request.cookies.get('redirect_count')?.value || '0');
+  
+  // Prevent redirect loops
+  if (redirectCount > 3) {
+    const response = NextResponse.next();
+    response.cookies.delete('redirect_count');
+    return response;
+  }
+  
   // Public routes that don't require authentication
   const publicRoutes = [
     '/sign-in',
@@ -29,23 +37,41 @@ export function middleware(request) {
                           pathname.startsWith('/add-new-listing') || 
                           pathname.startsWith('/edit-listing');
 
+  // Break redirect loops if detected (more than 5 redirects)
+  if (redirectCount > 5) {
+    // Clear problematic cookies and force to sign-in
+    const response = NextResponse.redirect(new URL('/sign-in', request.url));
+    response.cookies.set('access_token', '', { 
+      maxAge: 0,
+      path: '/',
+      sameSite: 'strict'
+    });
+    response.cookies.set('redirect_count', '0', { 
+      maxAge: 60 * 60, // 1 hour
+      path: '/',
+    });
+    return response;
+  }
+
   // If trying to access protected routes without token
   if ((isProtectedRoute || isAdminRoute) && !token) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    // Only redirect if not already on sign-in page
+    if (pathname !== '/sign-in') {
+      const response = NextResponse.redirect(new URL('/sign-in', request.url));
+      response.cookies.set('redirect_count', (redirectCount + 1).toString(), { 
+        maxAge: 60 * 60, // 1 hour
+        path: '/',
+      });
+      return response;
+    }
   }
-
-  // Redirect from homepage to sign-in if not authenticated
-  if (pathname === '/' && !token) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+  
+  // Clear redirect count on successful access
+  const response = NextResponse.next();
+  if (redirectCount > 0) {
+    response.cookies.delete('redirect_count');
   }
-
-  // If authenticated and trying to access auth pages, redirect to appropriate dashboard
-  if (token && (pathname === '/sign-in' || pathname === '/sign-up')) {
-    // We'll redirect to dashboard instead of home
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

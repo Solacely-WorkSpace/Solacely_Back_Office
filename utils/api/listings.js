@@ -8,11 +8,31 @@ export const listingsAPI = {
   
   getListing: (id) => apiClient.get(`/api/v1/apart/listings/${id}/`),
   
-  createListing: (listingData) => apiClient.post('/api/v1/apart/listings/', listingData),
-  
+ createListing: (listingData) => {
+   // If listingData is FormData, use postFormData
+   if (listingData instanceof FormData) {
+     return apiClient.postFormData('/api/v1/apart/listings/', listingData);
+   }
+   // Otherwise use regular post (for backward compatibility)
+   return apiClient.post('/api/v1/apart/listings/', listingData);
+ },
+
   updateListing: (id, listingData) => apiClient.put(`/api/v1/apart/listings/${id}/`, listingData),
   
   deleteListing: (id) => apiClient.delete(`/api/v1/apart/listings/${id}/`),
+  
+  // Add approval methods
+  approveListing: (id, reason = '') => 
+    apiClient.patch(`/api/v1/apart/listings/${id}/approve/`, { 
+      status: 'approved', 
+      reason 
+    }),
+  
+  rejectListing: (id, reason = '') => 
+    apiClient.patch(`/api/v1/apart/listings/${id}/approve/`, { 
+      status: 'rejected', 
+      reason 
+    }),
   
   getListingImages: (listingId) => apiClient.get(`/api/v1/apart/listings/${listingId}/images/`),
   

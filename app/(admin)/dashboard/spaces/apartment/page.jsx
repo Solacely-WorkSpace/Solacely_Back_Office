@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { Search, Plus, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -145,11 +145,11 @@ function ApartmentPage() {
   // Updated status badges with complementary colors
   const getStatusBadge = (isActive) => {
     return isActive ? (
-      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 font-medium">
+      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 font-medium rounded-md">
         Active
       </Badge>
     ) : (
-      <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200 font-medium">
+      <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200 font-medium rounded-md">
         Inactive
       </Badge>
     );
@@ -162,62 +162,50 @@ function ApartmentPage() {
       return "/icons/Logo.svg";
     }
 
-    if (apartment?.listingimages && apartment.listingimages.length > 0) {
-      const firstImage = apartment.listingimages[0];
+    // The API returns images under 'images' field, not 'listingimages'
+    if (apartment?.images && apartment.images.length > 0) {
+      const firstImage = apartment.images[0];
 
-      // Check for original_image_url first
+      // Check for original_image_url first (highest priority)
       if (firstImage.original_image_url && firstImage.original_image_url.startsWith("http")) {
         // Validate that it's not a broken Cloudinary URL
         if (
           firstImage.original_image_url.includes("cloudinary.com") &&
           (firstImage.original_image_url.includes("undefined") ||
-            firstImage.original_image_url.includes("null"))
+            firstImage.original_image_url.includes("null") ||
+            firstImage.original_image_url.includes("placeholder"))
         ) {
           return "/icons/Logo.svg";
         }
         return firstImage.original_image_url;
       }
 
-      // Check for url field
-      if (firstImage.url) {
-        // If it's already a full URL, use it
-        if (firstImage.url.startsWith("http")) {
-          // Validate that it's not a broken Cloudinary URL
-          if (
-            firstImage.url.includes("cloudinary.com") &&
-            (firstImage.url.includes("undefined") || firstImage.url.includes("null"))
-          ) {
-            return "/icons/Logo.svg";
-          }
-          return firstImage.url;
-        }
-        // If it's a Cloudinary path, construct the full URL properly
-        if (firstImage.url.includes("cloudinary")) {
-          return firstImage.url; // It's likely already a full path
-        } else {
-          // Use the proper Cloudinary URL format with full domain
-          return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.url}`;
-        }
-      }
-
-      // Check for image field
+      // Check for image field (Cloudinary field)
       if (firstImage.image) {
-        if (firstImage.image.startsWith("http")) {
+        // If it's already a full URL, use it
+        if (firstImage.image.startsWith && firstImage.image.startsWith("http")) {
           // Validate that it's not a broken Cloudinary URL
           if (
             firstImage.image.includes("cloudinary.com") &&
-            (firstImage.image.includes("undefined") || firstImage.image.includes("null"))
+            (firstImage.image.includes("undefined") || 
+             firstImage.image.includes("null") ||
+             firstImage.image.includes("placeholder"))
           ) {
             return "/icons/Logo.svg";
           }
           return firstImage.image;
         }
-        // If it's a Cloudinary path, construct the full URL properly
-        if (firstImage.image.includes("cloudinary")) {
-          return firstImage.image; // It's likely already a full path
-        } else {
-          // Use the proper Cloudinary URL format with full domain
-          return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.image}`;
+        // For Cloudinary fields, the image field might be an object
+        if (typeof firstImage.image === 'object' && firstImage.image.url) {
+          return firstImage.image.url;
+        }
+        // If it's a string path, construct the full URL
+        if (typeof firstImage.image === 'string') {
+          if (firstImage.image.includes("cloudinary")) {
+            return firstImage.image;
+          } else {
+            return `https://res.cloudinary.com/dsar6jtux/image/upload/${firstImage.image}`;
+          }
         }
       }
     }
@@ -278,88 +266,99 @@ function ApartmentPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Apartment Listings</h1>
-        <Button asChild>
-          <Link href="/dashboard/add-new-listing">Add new</Link>
+    <div className="flex-1 p-8 bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900">Apartment Listings</h1>
+        <Button className="bg-[#521282] hover:bg-[#521282]/90 text-white h-12 px-6 flex items-center gap-2" asChild>
+          <Link href="/dashboard/add-new-listing">
+            <Plus className="h-4 w-4" />
+            Add new
+          </Link>
         </Button>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Search and Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Search by address or price"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleSearch}>Search</Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="Rent">For Rent</SelectItem>
-                  <SelectItem value="Sell">For Sale</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Input
+            placeholder="Search by address or price..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg w-full"
+          />
+        </div>
+      </div>
 
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">For rent</SelectItem>
-                  <SelectItem value="inactive">Closed</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Filter Row */}
+      <div className="flex items-center gap-6 mb-8">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Type</span>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-32 h-10 border-gray-200">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Rent">For Rent</SelectItem>
+              <SelectItem value="Sell">For Sale</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-              <Select value={filterLocation} onValueChange={setFilterLocation}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  <SelectItem value="Lagos">Lagos</SelectItem>
-                  <SelectItem value="Abuja">Abuja</SelectItem>
-                  <SelectItem value="Port Harcourt">Port Harcourt</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Status</span>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-32 h-10 border-gray-200">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">For rent</SelectItem>
+              <SelectItem value="inactive">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-              <Select
-                value={`${sortBy}-${sortOrder}`}
-                onValueChange={(value) => {
-                  const [column, order] = value.split("-");
-                  setSortBy(column);
-                  setSortOrder(order);
-                }}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at-desc">Past 30 Days</SelectItem>
-                  <SelectItem value="created_at-asc">Oldest First</SelectItem>
-                  <SelectItem value="price-desc">Price High to Low</SelectItem>
-                  <SelectItem value="price-asc">Price Low to High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Location</span>
+          <Select value={filterLocation} onValueChange={setFilterLocation}>
+            <SelectTrigger className="w-32 h-10 border-gray-200">
+              <SelectValue placeholder="Lagos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              <SelectItem value="Lagos">Lagos</SelectItem>
+              <SelectItem value="Abuja">Abuja</SelectItem>
+              <SelectItem value="Port Harcourt">Port Harcourt</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Date</span>
+          <Select
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={(value) => {
+              const [column, order] = value.split("-");
+              setSortBy(column);
+              setSortOrder(order);
+            }}
+          >
+            <SelectTrigger className="w-40 h-10 border-gray-200">
+              <SelectValue placeholder="Past 30 Days" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at-desc">Past 30 Days</SelectItem>
+              <SelectItem value="created_at-asc">Oldest First</SelectItem>
+              <SelectItem value="price-desc">Price High to Low</SelectItem>
+              <SelectItem value="price-asc">Price Low to High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
  <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -478,14 +477,21 @@ function ApartmentPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-gray-100">
+                        <div className="relative h-12 w-20 rounded-md overflow-hidden bg-gray-100">
                           <Image
+                            key={`${apartment.id}-${imageErrors.has(apartment.id) ? 'placeholder' : 'image'}`}
                             src={getImageUrl(apartment)}
                             alt={apartment.address || "Property"}
                             fill
                             className={getImageUrl(apartment) === "/icons/Logo.svg" ? "object-contain p-2" : "object-cover"}
                             onError={() => {
                               handleImageError(apartment.id);
+                            }}
+                            onLoad={() => {
+                              // Optional: Log successful image loads for debugging
+                              if (process.env.NODE_ENV === 'development') {
+                                console.log(`Image loaded successfully for apartment ${apartment.id}`);
+                              }
                             }}
                           />
                         </div>
@@ -545,14 +551,11 @@ function ApartmentPage() {
                     </TableCell>
                     <TableCell>{getStatusBadge(apartment.active)}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
-                      >
+                      <span className="text-xs text-gray-500">
                         {apartment.propertyType ||
                           apartment.building_type ||
                           "Property"}
-                      </Badge>
+                      </span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -570,7 +573,7 @@ function ApartmentPage() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/edit-listing/${apartment.id}`}>
+                            <Link href={`/dashboard/edit-listing/${apartment.id}`}>
                               Edit
                             </Link>
                           </DropdownMenuItem>

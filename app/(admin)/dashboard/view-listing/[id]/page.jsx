@@ -89,21 +89,21 @@ function AdminViewListing({ params }) {
 
   const getCurrentImage = () => {
     if (
-      !listingDetail?.listingimages ||
-      listingDetail.listingimages.length === 0
+      !listingDetail?.images ||
+      listingDetail.images.length === 0
     ) {
       return "/icons/Logo.svg";
     }
-    return getImageUrl(listingDetail.listingimages[currentImageIndex]);
+    return getImageUrl(listingDetail.images[currentImageIndex]);
   };
 
   const nextImage = () => {
     if (
-      listingDetail?.listingimages &&
-      listingDetail.listingimages.length > 1
+      listingDetail?.images &&
+      listingDetail.images.length > 1
     ) {
       setCurrentImageIndex((prev) =>
-        prev === listingDetail.listingimages.length - 1 ? 0 : prev + 1
+        prev === listingDetail.images.length - 1 ? 0 : prev + 1
       );
       setImageError(false);
     }
@@ -111,11 +111,11 @@ function AdminViewListing({ params }) {
 
   const prevImage = () => {
     if (
-      listingDetail?.listingimages &&
-      listingDetail.listingimages.length > 1
+      listingDetail?.images &&
+      listingDetail.images.length > 1
     ) {
       setCurrentImageIndex((prev) =>
-        prev === 0 ? listingDetail.listingimages.length - 1 : prev - 1
+        prev === 0 ? listingDetail.images.length - 1 : prev - 1
       );
       setImageError(false);
     }
@@ -177,41 +177,74 @@ function AdminViewListing({ params }) {
     );
   }
 
+  
+
+  // Remove the first paymentBreakdown declaration and fix the JSX placement
+  
+  // Update the homeDetails array to show actual values instead of generic labels
+  const homeDetails = [
+    // Only show building type if it exists, with actual value
+    ...(listingDetail.building_type ? [{ label: listingDetail.building_type, checked: true }] : []),
+    { label: `${listingDetail.bedroom || listingDetail.number_of_bedrooms || 0} Bedrooms`, checked: true },
+    { label: `${listingDetail.bathroom || listingDetail.number_of_bathrooms || 0} Bathrooms`, checked: true },
+    { label: `${listingDetail.area || listingDetail.area_size_sqm || 0} sqft`, checked: true },
+    // Only show garage info if it exists, with actual value
+    ...(listingDetail.garage ? [{ label: listingDetail.garage, checked: true }] : []),
+    // Only show availability if it exists, with actual value
+    ...(listingDetail.propertyAvailability ? [{ label: listingDetail.propertyAvailability, checked: true }] : []),
+    { label: listingDetail.type === "Rent" ? "For Rent" : "For Sale", checked: true },
+    // Fix amenities handling - ensure it's an array and handle different data formats
+    ...(Array.isArray(listingDetail.amenities) 
+    ? listingDetail.amenities.map(amenity => ({
+        label: typeof amenity === 'string' ? amenity : amenity.name || amenity.label || 'Amenity',
+        checked: true
+      }))
+    : listingDetail.amenities && typeof listingDetail.amenities === 'string'
+    ? listingDetail.amenities.split(',').map(amenity => ({
+        label: amenity.trim(),
+        checked: true
+      }))
+    : []
+  )
+];
+
+  // Update the payment breakdown to use actual data
   const paymentBreakdown = [
-    { label: "Light fee", duration: "0 Year", amount: "₦0.00" },
-    { label: "Security Fee", duration: "0 Year", amount: "₦0.00" },
-    { label: "Estate Due", duration: "0 Year", amount: "₦0.00" },
-    { label: "Bin Contribution", duration: "0 Year", amount: "₦0.00" },
+    { 
+      label: "Light fee", 
+      duration: "1 Year", 
+      amount: `₦${listingDetail.lightFee?.toLocaleString() || "0"}` 
+    },
+    { 
+      label: "Security Fee", 
+      duration: "1 Year", 
+      amount: `₦${listingDetail.securityFee?.toLocaleString() || "0"}` 
+    },
+    { 
+      label: "Estate Due", 
+      duration: "1 Year", 
+      amount: `₦${listingDetail.estateDue?.toLocaleString() || "0"}` 
+    },
+    { 
+      label: "Bin Contribution", 
+      duration: "1 Year", 
+      amount: `₦${listingDetail.binContribution?.toLocaleString() || "0"}` 
+    },
     {
       label: "House Rent",
       duration: "1 Year",
       amount: `₦${listingDetail.price?.toLocaleString() || "0"}`,
     },
+    // Add additional fees if available
+    ...(listingDetail.additionalFees || []).map(fee => ({
+      label: fee.name,
+      duration: "1 Year",
+      amount: `₦${fee.amount?.toLocaleString() || "0"}`
+    }))
   ];
 
-  const homeDetails = [
-    { label: listingDetail.propertyType || "Property", checked: true },
-    { label: `${listingDetail.bedroom || 0} Bedrooms`, checked: true },
-    { label: `${listingDetail.bathroom || 0} Bathrooms`, checked: true },
-    { label: `${listingDetail.area || 0} sqft`, checked: true },
-    {
-      label: listingDetail.type === "Rent" ? "For Rent" : "For Sale",
-      checked: true,
-    },
-    { label: "Air Conditioning", checked: true },
-    { label: "Modern Kitchen", checked: true },
-    { label: "Parking Available", checked: true },
-    { label: "Security", checked: true },
-  ];
-
-  const homeDefects = [
-    { label: "Kitchen Maintenance", cost: "₦25,000", icon: "🔧" },
-    { label: "Plumbing Check", cost: "₦15,000", icon: "🚽" },
-    { label: "AC Servicing", cost: "₦20,000", icon: "❄️" },
-  ];
-
-  // Prepare coordinates for map
-  const mapCoordinates =
+  // Update coordinates handling for better map display
+  const mapCoordinates = 
     listingDetail.coordinates ||
     (listingDetail.latitude && listingDetail.longitude
       ? {
@@ -219,6 +252,12 @@ function AdminViewListing({ params }) {
           lng: parseFloat(listingDetail.longitude),
         }
       : null);
+  
+  // Create a listing object with coordinates for the map
+  const listingWithCoordinates = mapCoordinates ? {
+    ...listingDetail,
+    coordinates: mapCoordinates
+  } : null;
 
   return (
     <div className="p-6">
@@ -234,77 +273,77 @@ function AdminViewListing({ params }) {
         </Button>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Property Details */}
-        <div className="space-y-6">
-          {/* Hero Image Section */}
-          <div className="relative h-80 bg-gray-900 rounded-lg overflow-hidden">
-            {!imageError ? (
-              <>
-                <Image
-                  src={getCurrentImage()}
-                  alt={`${listingDetail.propertyType || "Property"} - ${
-                    listingDetail.address || "Image"
-                  }`}
-                  fill
-                  className="object-cover transition-all duration-500 ease-in-out"
-                  priority
-                  onError={handleImageError}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+      {/* Hero Image Section - Full Width */}
+      <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden mb-8">
+        {!imageError ? (
+          <>
+            <Image
+              src={getCurrentImage()}
+              alt={`${listingDetail.propertyType || "Property"} - ${
+                listingDetail.address || "Image"
+              }`}
+              fill
+              className="object-contain transition-all duration-500 ease-in-out"
+              priority
+              onError={handleImageError}
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-10"></div>
 
-                {/* Navigation Arrows - Only show if multiple images */}
-                {listingDetail?.listingimages &&
-                  listingDetail.listingimages.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevImage}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-all"
-                      >
-                        <ChevronLeft className="w-6 h-6 text-white" />
-                      </button>
-                      <button
-                        onClick={nextImage}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-all"
-                      >
-                        <ChevronRight className="w-6 h-6 text-white" />
-                      </button>
-                    </>
-                  )}
+            {/* Navigation Arrows - Only show if multiple images */}
+            {listingDetail?.images &&
+              listingDetail.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-all"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-all"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white" />
+                  </button>
+                </>
+              )}
 
-                {/* Image Counter */}
-                {listingDetail?.listingimages &&
-                  listingDetail.listingimages.length > 1 && (
-                    <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                      {currentImageIndex + 1} /{" "}
-                      {listingDetail.listingimages.length}
-                    </div>
-                  )}
-
-                {/* Navigate Apartment Button */}
-                <div className="absolute bottom-4 right-4">
-                  <Button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30">
-                    View on Map
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+            {/* Image Counter */}
+            {listingDetail?.images &&
+              listingDetail.images.length > 1 && (
+                <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                  {currentImageIndex + 1} /{" "}
+                  {listingDetail.images.length}
                 </div>
-              </>
-            ) : (
-              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">🏠</div>
-                  <span className="text-gray-500">Image not available</span>
-                </div>
-              </div>
-            )}
+              )}
+
+            {/* Navigate Apartment Button */}
+            <div className="absolute bottom-4 right-4">
+              <Button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30">
+                View on Map
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-4xl mb-2">🏠</div>
+              <span className="text-gray-500">Image not available</span>
+            </div>
           </div>
+        )}
+      </div>
 
+      {/* Main Content Grid - Property Details Left, Payment Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Property Details (2/3 width) */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Property Header */}
           <div>
             <div className="flex items-center text-gray-600 mb-2">
               <MapPin className="w-4 h-4 mr-1" />
-              <span>{listingDetail.address || "Address not available"}</span>
+              <span>{listingDetail.location || "Address not available"}</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {listingDetail.title ||
@@ -315,15 +354,15 @@ function AdminViewListing({ params }) {
             <div className="flex items-center space-x-6 text-gray-600 mb-6">
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-1" />
-                <span>{listingDetail.bedroom || 0} bed</span>
+                <span>{listingDetail.number_of_bedrooms || 0} bed</span>
               </div>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span>{listingDetail.bathroom || 0} bath</span>
+                <span>{listingDetail.number_of_bathrooms || 0} bath</span>
               </div>
               <div className="flex items-center">
                 <Maximize className="w-4 h-4 mr-1" />
-                <span>{listingDetail.area || 0} sqft</span>
+                <span>{listingDetail.area_size_sqm || 0} sqft</span>
               </div>
             </div>
             <div className="flex items-center justify-between mb-6">
@@ -345,8 +384,7 @@ function AdminViewListing({ params }) {
               Description
             </h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              {listingDetail.description ||
-                "This is a beautiful property with modern amenities and excellent location. Perfect for comfortable living with all necessary facilities nearby."}
+              {listingDetail.description || "No description available."}
             </p>
             <p className="text-gray-500 text-sm">
               Listed by{" "}
@@ -372,72 +410,95 @@ function AdminViewListing({ params }) {
             </div>
           </div>
 
-          {/* Home Defects */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Maintenance & Services
-            </h2>
-            <div className="space-y-4">
-              {homeDefects.map((defect, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 bg-white rounded-lg border"
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{defect.icon}</span>
-                    <span className="font-medium text-gray-900">
-                      {defect.label}
-                    </span>
+          {/* Add amenities section after Property Details */}
+          {listingDetail.amenities && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Amenities
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {listingDetail.amenities.split(',').map((amenity, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span className="text-gray-700">{amenity.trim()}</span>
                   </div>
-                  <span className="font-bold text-teal-600">{defect.cost}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-
+          )}
+          
+          {/* Add repairs section if available */}
+          {listingDetail.repairs && listingDetail.repairs.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Required Repairs
+              </h2>
+              <div className="space-y-4">
+                {listingDetail.repairs.map((repair, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">🔧</span>
+                      <span className="font-medium text-gray-900">{repair}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Add defects section if available */}
+          {listingDetail.defects && listingDetail.defects.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Property Defects
+              </h2>
+              <div className="space-y-4">
+                {listingDetail.defects.map((defect, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">⚠️</span>
+                      <span className="font-medium text-gray-900">{defect}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* Housing Agent */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Contact Agent
             </h2>
-            <div className="flex items-center space-x-4 p-6 bg-white rounded-lg border">
-              <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-4 p-4  rounded-xl">
+              <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
                 {listingDetail.profileImage ? (
                   <Image
                     src={listingDetail.profileImage}
                     alt="Agent"
-                    width={64}
-                    height={64}
+                    width={48}
+                    height={48}
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-8 h-8 text-gray-500" />
+                  <User className="w-6 h-6 text-gray-500" />
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-gray-900">
+                <h3 className="text-sm font-medium text-gray-900">
                   {listingDetail.fullName ||
                     listingDetail.createdBy ||
                     "Property Agent"}
                 </h3>
-                <p className="text-gray-600">Professional Real Estate Agent</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-gray-500">
                   Contact for viewing and inquiries
                 </p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
-                  Call Agent
-                </Button>
-                <Button size="sm" variant="outline">
-                  Send Message
-                </Button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column - Payment & Map */}
+        {/* Right Column - Payment Breakdown & Map (1/3 width) */}
         <div className="space-y-6">
           {/* Payment Breakdown */}
           <div className="bg-white rounded-lg border p-6">
@@ -479,26 +540,27 @@ function AdminViewListing({ params }) {
             </div>
           </div>
 
-          {/* Map Location */}
-          <div className="bg-white rounded-lg border p-6">
+          {/* Map Location - No Border, Wider */}
+          <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">
               Map Location
             </h3>
-            <div className="h-96 rounded-lg overflow-hidden">
+            {/* Map Location section */}
+            <div className="h-80 rounded-2xl overflow-hidden w-full">
               {mapCoordinates ? (
                 <GoogleMapSection
                   coordinates={mapCoordinates}
-                  listing={[listingDetail]}
+                  listing={listingWithCoordinates ? [listingWithCoordinates] : []}
                 />
               ) : (
-                <div className="h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="h-full bg-gray-200 rounded-2xl flex items-center justify-center">
                   <div className="text-center">
                     <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <span className="text-gray-500">
                       Location data not available
                     </span>
                     <p className="text-sm text-gray-400 mt-1">
-                      {listingDetail.address || "No address provided"}
+                      {listingDetail.location || "No address provided"}
                     </p>
                   </div>
                 </div>
@@ -506,44 +568,48 @@ function AdminViewListing({ params }) {
             </div>
           </div>
 
-          {/* Property Status */}
-          <div className="bg-white rounded-lg border p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              Property Status
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Status:</span>
-                <span
-                  className={`font-medium ${
-                    listingDetail.active ? "text-green-600" : "text-gray-500"
-                  }`}
-                >
-                  {listingDetail.active ? "Available" : "Not Available"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Property Type:</span>
-                <span className="font-medium">
-                  {listingDetail.propertyType || "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Listing Type:</span>
-                <span className="font-medium">
-                  {listingDetail.type || "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Date Listed:</span>
-                <span className="font-medium">
-                  {listingDetail.createdAt
-                    ? new Date(listingDetail.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </span>
+         
+
+          {/* Add RTO section if RTO data is available */}
+          {(listingDetail.rentalPeriod || listingDetail.optionToBuyPeriod) && (
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Rent-to-Own Details
+              </h3>
+              <div className="space-y-3">
+                {listingDetail.rentalPeriod && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Rental Period:</span>
+                    <span className="font-medium">{listingDetail.rentalPeriod} months</span>
+                  </div>
+                )}
+                {listingDetail.optionToBuyPeriod && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Option to Buy Period:</span>
+                    <span className="font-medium">{listingDetail.optionToBuyPeriod} months</span>
+                  </div>
+                )}
+                {listingDetail.buyOptionExpiryDate && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Buy Option Expires:</span>
+                    <span className="font-medium">{new Date(listingDetail.buyOptionExpiryDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {listingDetail.monthlyRent && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Monthly Rent:</span>
+                    <span className="font-medium">₦{listingDetail.monthlyRent.toLocaleString()}</span>
+                  </div>
+                )}
+                {listingDetail.buyPrice && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Buy Price:</span>
+                    <span className="font-medium">₦{listingDetail.buyPrice.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

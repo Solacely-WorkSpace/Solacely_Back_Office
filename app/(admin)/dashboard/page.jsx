@@ -46,16 +46,16 @@ function AdminDashboard() {
 
     window.addEventListener('listingCreated', handleListingCreated);
     
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(() => {
-      if (isAuthenticated) {
-        fetchDashboardStats();
-      }
-    }, 30000);
+    // Remove the auto-refresh interval
+    // const interval = setInterval(() => {
+    //   if (isAuthenticated) {
+    //     fetchDashboardStats();
+    //   }
+    // }, 30000);
 
     return () => {
       window.removeEventListener('listingCreated', handleListingCreated);
-      clearInterval(interval);
+      // clearInterval(interval); // Remove this as well since we removed the interval
     };
   }, [isAuthenticated]);
 
@@ -67,7 +67,7 @@ function AdminDashboard() {
         adminAPI.getDashboardStats(),
         adminAPI.getWalletStats(),
         adminAPI.getRevenueStats(),
-        listingsAPI.getListings({ status: 'available' }) // Add status parameter like PropertyChart
+        listingsAPI.getListings({ status: 'available' })
       ]);
 
       const [adminStatsResult, walletStatsResult, revenueStatsResult, listingsResult] = results;
@@ -105,20 +105,16 @@ function AdminDashboard() {
         newStats.totalListings = listings ? listings.length : 0;
         
         // Set hasRealData to true even if we have 0 listings
-        // This is the key change - we need to set hasRealData to true
-        // as long as the API call was successful
         hasRealData = true;
         
         if (listings && listings.length > 0) {
-          // Get sell listings with status parameter
-          const sellListings = await listingsAPI.getListings({ type: 'Sell', status: 'available' });
-          const sellData = sellListings.results || sellListings;
-          const sellCount = sellData ? sellData.length : 0;
+          // Count sell and rent listings directly from the existing data
+          // instead of making additional API calls
+          const sellCount = listings.filter(item => 
+            (item.type || '').toLowerCase() === 'sell').length;
           
-          // Get rent listings with status parameter
-          const rentListings = await listingsAPI.getListings({ type: 'Rent', status: 'available' });
-          const rentData = rentListings.results || rentListings;
-          const rentCount = rentData ? rentData.length : 0;
+          const rentCount = listings.filter(item => 
+            (item.type || '').toLowerCase() === 'rent').length;
           
           // Count property types with improved categorization
           const propertyTypes = {
@@ -157,7 +153,6 @@ function AdminDashboard() {
             hotel: 0,
             'real estate': 0
           };
-          // Don't set hasRealData = true here since we have no actual listings
         }
       }
       
@@ -170,6 +165,12 @@ function AdminDashboard() {
       // Set to zero values on error
       setStats(initialData);
       setUsingRealData(false);
+      
+      // Add error handling to prevent redirect loops
+      if (error.message && error.message.includes('Authentication failed')) {
+        // Display error message instead of redirecting
+        toast.error('Authentication error. Please try refreshing the page or logging in again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -191,7 +192,7 @@ function AdminDashboard() {
             )}
           </div>
           <div className="p-1.5 bg-green-50 rounded-lg flex-shrink-0">
-            <Building className="h-4 w-4" style={{color: '#3DC5A1'}} />
+          <img src="/Frame 162465-4.png" alt="Total Customers" className="h-6 w-6" />
           </div>
         </div>
         
@@ -233,27 +234,27 @@ function AdminDashboard() {
         <DashboardStats 
           title="Total Customers" 
           value={stats.totalCustomers.toLocaleString()} 
-          subtitle={`${stats.totalCustomers} users`}
+         
           change="+2.1%"
-          icon={<Users className="h-4 w-4" style={{color: '#521282'}} />} 
+          icon={<img src="/Frame 162465.png" alt="Total Customers" className="h-6 w-6" />} 
           loading={loading}
           showDate={true}
         />
         <DashboardStats 
           title="Total Amount" 
           value={`₦${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-          subtitle="Revenue"
+         
           change="+0.8%"
-          icon={<DollarSign className="h-4 w-4" style={{color: '#3DC5A1'}} />} 
+          icon={<img src="/Frame 162465-2.png" alt="Total Customers" className="h-6 w-6" />} 
           loading={loading}
           showDate={true}
         />
         <DashboardStats 
           title="Total Reports" 
           value={stats.totalReports.toLocaleString()}
-          subtitle="Reports"
+         
           change="+1.2%"
-          icon={<BarChart className="h-4 w-4" style={{color: '#521282'}} />} 
+          icon={<img src="/Frame 162465-3.png" alt="Total Customers" className="h-6 w-6" />} 
           loading={loading}
           showDate={true}
         />

@@ -5,47 +5,52 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 import { adminAPI } from '@/utils/api/admin';
 import { Skeleton } from '@/components/ui/skeleton';
 
-function RevenueChart() {
-  const [revenueData, setRevenueData] = useState({
+function RevenueChart({ initialData, loading: parentLoading }) {
+  const [revenueData, setRevenueData] = useState(initialData || {
     monthly_data: [],
     total_revenue: 0,
     percentage_change: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(parentLoading || true);
 
   useEffect(() => {
-    const fetchRevenueData = async () => {
-      setLoading(true);
-      try {
-        const data = await adminAPI.getMonthlyRevenue();
-        // Add null check
-        if (data) {
-          setRevenueData(data);
-        } else {
+    // Update from parent data if provided
+    if (initialData) {
+      setRevenueData(initialData);
+      setLoading(parentLoading);
+    } else {
+      // Only fetch if no initial data provided
+      const fetchRevenueData = async () => {
+        setLoading(true);
+        try {
+          const data = await adminAPI.getMonthlyRevenue();
+          // Add null check
+          if (data) {
+            setRevenueData(data);
+          } else {
+            setRevenueData({
+              monthly_data: [],
+              total_revenue: 0,
+              percentage_change: 0
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching monthly revenue:', error);
           setRevenueData({
             monthly_data: [],
             total_revenue: 0,
             percentage_change: 0
           });
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching monthly revenue:', error);
-        setRevenueData({
-          monthly_data: [],
-          total_revenue: 0,
-          percentage_change: 0
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchRevenueData();
-    
-    // Refresh data every 5 minutes
-    const interval = setInterval(fetchRevenueData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+      fetchRevenueData();
+      
+      return () => {};
+    }
+  }, [initialData, parentLoading]);
 
   // Format the total revenue as currency
   const formattedTotalRevenue = new Intl.NumberFormat('en-NG', {

@@ -3,15 +3,7 @@ import React, { useEffect, useState } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Eye,
-  Pencil,
-  Trash,
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,6 +16,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+// Add AlertDialog imports
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// Add Plus to your imports at the top of the file
+import { Search, Eye, Pencil, Trash, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 function ListingsManagement() {
   const [listings, setListings] = useState([]);
@@ -34,7 +40,11 @@ function ListingsManagement() {
   const [filterStatus, setFilterStatus] = useState("");
   const [imageErrors, setImageErrors] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
-
+      const [locationFilter, setLocationFilter] = useState('all');
+  // Add delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState(null);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -101,53 +111,71 @@ function ListingsManagement() {
 
   // Enhanced delete with optimistic updates
   const handleDeleteListing = async (id) => {
-    if (confirm("Are you sure you want to delete this listing?")) {
-      // Optimistic update
-      const originalListings = [...listings];
-      const originalAllListings = [...allListings];
-      setListings((prev) => prev.filter((listing) => listing.id !== id));
-      setAllListings((prev) => prev.filter((listing) => listing.id !== id));
-
-      try {
-        await listingsAPI.deleteListing(id);
-        toast.success("Listing deleted successfully");
-      } catch (error) {
-        // Revert on error
-        setListings(originalListings);
-        setAllListings(originalAllListings);
-        console.error("Error deleting listing:", error);
-        toast.error("Failed to delete listing");
-      }
-    }
+    // Open the custom dialog instead of using browser confirm
+    setListingToDelete(id);
+    setDeleteDialogOpen(true);
   };
 
-  // Enhanced status toggle with optimistic updates
-  const toggleListingStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === "available" ? "sold" : "available";
-
-    // Optimistic update
+  // Function to execute the actual deletion after confirmation
+  const confirmDelete = async () => {
+    if (!listingToDelete) return;
+    
+    // Optimistic update - remove from UI immediately
     const originalListings = [...listings];
     const originalAllListings = [...allListings];
-    setListings((prev) =>
-      prev.map((listing) =>
-        listing.id === id ? { ...listing, status: newStatus } : listing
-      )
-    );
-    setAllListings((prev) =>
-      prev.map((listing) =>
-        listing.id === id ? { ...listing, status: newStatus } : listing
-      )
-    );
+    setListings((prev) => prev.filter((listing) => listing.id !== listingToDelete));
+    setAllListings((prev) => prev.filter((listing) => listing.id !== listingToDelete));
 
     try {
-      await listingsAPI.updateListing(id, { status: newStatus });
-      toast.success("Listing status updated");
+      await listingsAPI.deleteListing(listingToDelete);
+      toast.success("Listing deleted successfully");
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('listingDeleted', {
+        detail: { listingId: listingToDelete }
+      }));
     } catch (error) {
       // Revert on error
       setListings(originalListings);
       setAllListings(originalAllListings);
-      console.error("Error updating listing status:", error);
-      toast.error("Failed to update listing status");
+      console.error("Error deleting listing:", error);
+      toast.error("Failed to delete listing");
+    } finally {
+      // Reset state
+      setListingToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  // Function to cancel deletion
+  const cancelDelete = () => {
+    setListingToDelete(null);
+    setDeleteDialogOpen(false);
+  };
+
+  // Enhanced status toggle with optimistic updates
+  const toggleListingStatus = async (listingId) => {
+    const listing = listings.find(l => l.id === listingId);
+    if (!listing) return;
+  
+    // Use correct backend status values: 'available' <-> 'rented' (instead of 'sold')
+    const newStatus = listing.status === 'available' ? 'rented' : 'available';
+    
+    // Optimistic update
+    setListings(prev => prev.map(l => 
+      l.id === listingId ? { ...l, status: newStatus } : l
+    ));
+  
+    try {
+      await listingsAPI.updateListing(listingId, { status: newStatus });
+      toast.success(`Listing marked as ${newStatus}`);
+    } catch (error) {
+      // Revert on error
+      setListings(prev => prev.map(l => 
+        l.id === listingId ? { ...l, status: listing.status } : l
+      ));
+      toast.error('Failed to update listing status');
+      console.error('Error updating listing status:', error);
     }
   };
 
@@ -218,18 +246,48 @@ function ListingsManagement() {
       return;
     }
 
-    const filteredListings = allListings.filter(
-      (listing) =>
-        (listing.location &&
-          listing.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (listing.address &&
-          listing.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (listing.title &&
-          listing.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (listing.price && listing.price.toString().includes(searchTerm))
-    );
-
-    setListings(filteredListings);
+    // Update the useEffect that handles filtering (around line 80-120)
+    useEffect(() => {
+      let filteredListings = [...allListings];
+    
+      // Apply search filter
+      if (searchTerm) {
+        filteredListings = filteredListings.filter(
+          (listing) =>
+            (listing.location &&
+              listing.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (listing.address &&
+              listing.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (listing.title &&
+              listing.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (listing.price && listing.price.toString().includes(searchTerm))
+        );
+      }
+    
+      // Apply type filter
+      if (filterType !== 'all') {
+        filteredListings = filteredListings.filter(
+          (listing) => listing.listing_type === filterType || listing.type === filterType
+        );
+      }
+    
+      // Apply status filter
+      if (filterStatus !== 'all') {
+        filteredListings = filteredListings.filter(
+          (listing) => listing.status === filterStatus
+        );
+      }
+    
+   
+      filteredListings = filteredListings.filter(
+        (listing) => 
+          listing.location && 
+          listing.location.toLowerCase().includes(locationFilter.toLowerCase())
+      );
+    
+      setListings(filteredListings);
+      setCurrentPage(1);
+    }, [allListings, searchTerm, filterType, filterStatus, locationFilter]);
     setCurrentPage(1); // Reset to first page after search
   };
 
@@ -285,67 +343,116 @@ function ListingsManagement() {
 
   return (
     <div className="p-6 md:p-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Listings Management</h1>
+      {/* Add AlertDialog here */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              listing and remove the data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900">Listings Management</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
+            className="h-12 px-6"
           >
             {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
-          <Button asChild>
-            <Link href="/dashboard/add-new-listing">Add New Listing</Link>
+          <Button asChild className="bg-[#521282] hover:bg-[#521282]/90 text-white h-12 px-6 flex items-center gap-2">
+            <Link href="/dashboard/add-new-listing">
+              <Plus className="h-4 w-4" />
+              Add New Listing
+            </Link>
           </Button>
         </div>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Search and Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Search by location, address, title, or price"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleSearch}>
-                  <Search className="h-4 w-4 mr-2" /> Search
-                </Button>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="sale">For Sale</SelectItem>
-                  <SelectItem value="rent">For Rent</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Input
+            placeholder="Search by location, address, title, or price..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-12 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg w-full"
+          />
+        </div>
+        <Button 
+          onClick={handleSearch}
+          className="h-12 px-6 bg-[#521282] hover:bg-[#521282]/90"
+        >
+          Search
+        </Button>
+      </div>
 
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Available</SelectItem>
-                  <SelectItem value="inactive">Sold</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filter Row */}
+      <div className="flex items-center gap-6 mb-8">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Type</span>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-32 h-10 border-gray-200">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="sale">For Sale</SelectItem>
+              <SelectItem value="rent">For Rent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Status</span>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-32 h-10 border-gray-200">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="rented">Rented</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="unavailable">Unavailable</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 min-w-fit">Location</span>
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="w-40 h-10 border-gray-200">
+              <SelectValue placeholder="All Locations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              <SelectItem value="Lagos">Lagos</SelectItem>
+              <SelectItem value="Abuja">Abuja</SelectItem>
+              <SelectItem value="Port Harcourt">Port Harcourt</SelectItem>
+              <SelectItem value="Kano">Kano</SelectItem>
+              <SelectItem value="Ibadan">Ibadan</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <Card>
         <CardHeader>
@@ -386,7 +493,7 @@ function ListingsManagement() {
                         className="flex items-center justify-between p-4 border rounded-lg"
                       >
                         <div className="flex items-center space-x-4">
-                          <div className="relative h-16 w-16 rounded-md overflow-hidden">
+                          <div className="relative h-20 w-28 rounded-md overflow-hidden bg-gray-100">
                             <Image
                               src={imageUrl}
                               alt={
@@ -395,32 +502,28 @@ function ListingsManagement() {
                                 "Property image"
                               }
                               fill
-                              className="object-cover"
+                              className="object-contain"
                               onError={() => handleImageError(listing.id)}
                             />
                           </div>
                           <div>
-                            <h3
-                              className="font-medium text-lg"
-                              style={{ color: "#3DC5A1" }}
-                            >
-                              ₦
-                              {listing.price
-                                ? Number(listing.price).toLocaleString()
-                                : "0"}
-                            </h3>
-                            <p className="text-sm text-gray-500 truncate max-w-[200px]">
+                            {/* Location first */}
+                            <p className="text-sm text-gray-600 mb-1">
                               {listing.location ||
                                 listing.address ||
                                 "Location not specified"}
                             </p>
-                            <p className="text-sm font-medium truncate max-w-[250px]">
+                            
+                            {/* Property name second */}
+                            <p className="text-sm font-medium mb-2 truncate max-w-[250px]">
                               {listing.title ||
-                                `${listing.building_type || "Property"} - ${
-                                  listing.number_of_bedrooms || 0
+                                `${listing.building_type || listing.propertyType || "Property"} - ${
+                                  listing.number_of_bedrooms || listing.bedroom || 0
                                 } Bedroom`}
                             </p>
-                            <div className="flex items-center space-x-2 mt-1">
+                            
+                            {/* Bed, bath, sqft third - using actual data */}
+                            <div className="flex items-center space-x-2 mb-2">
                               <Badge
                                 variant={
                                   listing.status === "available"
@@ -433,7 +536,7 @@ function ListingsManagement() {
                                   : listing.status || "Draft"}
                               </Badge>
                               <Badge variant="outline">
-                                {listing.listing_type || "Sale"}
+                                {listing.listing_type || listing.type || "Sale"}
                               </Badge>
                               <span className="text-xs text-gray-500">
                                 {listing.number_of_bedrooms ||
@@ -443,9 +546,20 @@ function ListingsManagement() {
                                 {listing.number_of_bathrooms ||
                                   listing.bathroom ||
                                   0}{" "}
-                                bath • {listing.area || "N/A"} sqft
+                                bath • {listing.area_size_sqm || "N/A"} sqm
                               </span>
                             </div>
+                            
+                            {/* Price at the bottom */}
+                            <h3
+                              className="font-medium text-lg"
+                              style={{ color: "#3DC5A1" }}
+                            >
+                              ₦
+                              {listing.price
+                                ? Number(listing.price).toLocaleString()
+                                : "0"}
+                            </h3>
                           </div>
                         </div>
                         <div className="flex space-x-2">
