@@ -230,7 +230,7 @@ function AdminDashboard() {
   return (
     <div className="p-6">
       {/* Stats Cards - Using flexbox for better control */}
-      <div className="flex flex-wrap justify-center gap-6 mb-6">
+      <div className="flex flex-wrap justify-between gap-3 mb-6"> {/* Reduced gap from gap-6 to gap-3 for even spacing */}
         <DashboardStats 
           title="Total Customers" 
           value={stats.totalCustomers.toLocaleString()} 

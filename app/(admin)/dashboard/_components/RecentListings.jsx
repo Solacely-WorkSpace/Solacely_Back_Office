@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, BedDouble, Bath, CarFront, Home } from "lucide-react";
+import { MapPin, BedDouble, Bath, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -10,6 +9,46 @@ function RecentListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState(new Set());
+
+  // Dummy data for fallback
+  const dummyListings = [
+    {
+      id: "dummy-1",
+      title: "Luxury 3 Bedroom Apartment",
+      location: "Lagos, Lekki Phase 1",
+      number_of_bedrooms: 3,
+      number_of_bathrooms: 2,
+      area_size_sqm: 120,
+      price: 25000000,
+      status: "available",
+      listing_type: "Sale",
+      images: [{ original_image_url: "/icons/Logo.svg" }],
+    },
+    {
+      id: "dummy-2",
+      title: "Modern 2 Bedroom Flat",
+      location: "Abuja, Wuse 2",
+      number_of_bedrooms: 2,
+      number_of_bathrooms: 2,
+      area_size_sqm: 85,
+      price: 18000000,
+      status: "available",
+      listing_type: "Rent",
+      images: [{ original_image_url: "/icons/Logo.svg" }],
+    },
+    {
+      id: "dummy-3",
+      title: "Spacious 4 Bedroom Duplex",
+      location: "Port Harcourt, GRA",
+      number_of_bedrooms: 4,
+      number_of_bathrooms: 3,
+      area_size_sqm: 200,
+      price: 45000000,
+      status: "available",
+      listing_type: "Sale",
+      images: [{ original_image_url: "/icons/Logo.svg" }],
+    },
+  ];
 
   useEffect(() => {
     fetchRecentListings();
@@ -29,9 +68,19 @@ function RecentListings() {
 
       // Ensure we only take the first 3 listings
       const limitedListings = Array.isArray(data) ? data.slice(0, 3) : [];
-      setListings(limitedListings);
+
+      // If no listings were returned, use dummy data
+      if (limitedListings.length === 0) {
+        console.log("No listings returned from API, using dummy data");
+        setListings(dummyListings);
+      } else {
+        setListings(limitedListings);
+      }
     } catch (error) {
       console.error("Error fetching recent listings:", error);
+      // Use dummy data when API call fails
+      console.log("API call failed, using dummy data");
+      setListings(dummyListings);
     }
     setLoading(false);
   };
@@ -110,13 +159,13 @@ function RecentListings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">
-          Recently listed property{" "}
+          Recently listed property
         </CardTitle>
         <Link
           href="/dashboard/listings"
-          className="text-sm text-blue-600 hover:underline"
+          className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors flex items-center"
         >
-          View all
+          View all <ChevronRight className="h-3 w-3 ml-1" />
         </Link>
       </CardHeader>
       <CardContent>
@@ -130,108 +179,103 @@ function RecentListings() {
             ))}
           </div>
         ) : (
-          <div className="space-y-6">
-            {listings.map((listing) => {
+          <div>
+            {listings.map((listing, index) => {
               const imageUrl = getImageUrl(listing);
               const isPlaceholder = imageUrl === "/icons/Logo.svg";
+              const isNotLast = index < listings.length - 1;
 
               return (
-                <Link
-                  key={listing.id}
-                  href={`/dashboard/view-listing/${listing.id}`}
-                  className="block"
-                >
-                  <div className="flex gap-6 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer">
-                    {/* Wider Image Container - Full image display */}
-                    <div className="relative h-32 w-56 md:h-36 md:w-64 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                      {isPlaceholder ? (
-                        <Image
-                          src="/icons/Logo.svg"
-                          alt="Property placeholder"
-                          fill
-                          className="object-contain"
-                          priority={false}
-                        />
-                      ) : (
-                        <Image
-                          src={imageUrl}
-                          alt={listing.location || "Property image"}
-                          fill
-                          className="object-contain"
-                          onError={() => handleImageError(listing.id)}
-                          priority={false}
-                        />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Location at the top */}
-                      <div className="flex items-center text-sm text-gray-500 mb-2">
-                        <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">
-                          {listing.location || "Location not specified"}
-                        </span>
-                      </div>
-
-                      {/* Apartment title */}
-                      <h3 className="font-semibold text-gray-900 text-lg mb-3 line-clamp-1">
-                        {listing.title ||
-                          `${listing.building_type || "Property"} - ${
-                            listing.number_of_bedrooms || 0
-                          } Bedroom`}
-                      </h3>
-
-                      {/* Bed, Bath, and Sqft in one line */}
-                      <div className="flex flex-wrap gap-4 mb-3">
-                        {listing.number_of_bedrooms && (
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <BedDouble className="h-4 w-4" />
-                            <span>{listing.number_of_bedrooms} Bed</span>
-                          </div>
-                        )}
-                        {listing.number_of_bathrooms && (
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Bath className="h-4 w-4" />
-                            <span>{listing.number_of_bathrooms} Bath</span>
-                          </div>
-                        )}
-                        {listing.area_size_sqm && (
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Home className="h-4 w-4" />
-                            <span>{listing.area_size_sqm} sqft</span>
-                          </div>
+                <div key={listing.id}>
+                  <Link
+                    href={`/dashboard/view-listing/${listing.id}`}
+                    className="block py-4"
+                  >
+                    <div className="flex gap-6">
+                      {/* Image Container */}
+                      <div className="relative h-32 w-56 md:h-36 md:w-64 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                        {isPlaceholder ? (
+                          <Image
+                            src="/icons/Logo.svg"
+                            alt="Property placeholder"
+                            fill
+                            className="object-contain"
+                            priority={false}
+                          />
+                        ) : (
+                          <Image
+                            src={imageUrl}
+                            alt={listing.location || "Property image"}
+                            fill
+                            className="object-contain"
+                            onError={() => handleImageError(listing.id)}
+                            priority={false}
+                          />
                         )}
                       </div>
 
-                      {/* Price section at the bottom */}
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="text-xl font-bold"
-                          style={{ color: "#3DC5A1" }}
-                        >
-                          ₦
-                          {listing.price
-                            ? Number(listing.price).toLocaleString()
-                            : "0"}
-                        </span>
-                        <Badge
-                          variant={
-                            listing.status === "available"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {listing.status === "available"
-                            ? "Available"
-                            : listing.status}
-                        </Badge>
-                        <Badge variant="outline">
-                          {listing.listing_type || "Sale"}
-                        </Badge>
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        {/* Apartment | City */}
+                        <div className="text-sm text-gray-500 mb-1">
+                          {listing.building_type || "Apartment"} |{" "}
+                          {listing.location?.split(",")[0] || "City"}
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1">
+                          {listing.title ||
+                            `${
+                              listing.number_of_bedrooms || 0
+                            } Bedroom Property`}
+                        </h3>
+
+                        {/* Bed, Bath, and Sqft in one line */}
+                        <div className="flex flex-wrap gap-4 mb-2 text-xs text-gray-600"> 
+                          {listing.number_of_bedrooms && (
+                            <div className="flex items-center gap-1">
+                              <BedDouble className="h-3 w-3" /> {/* Reduced icon size from h-4 w-4 to h-3 w-3 */}
+                              <span>{listing.number_of_bedrooms} Bed</span>
+                            </div>
+                          )}
+                          {listing.number_of_bathrooms && (
+                            <div className="flex items-center gap-1">
+                              <Bath className="h-3 w-3" /> {/* Reduced icon size from h-4 w-4 to h-3 w-3 */}
+                              <span>{listing.number_of_bathrooms} Bath</span>
+                            </div>
+                          )}
+                          {listing.area_size_sqm && (
+                            <div className="flex items-center gap-1">
+                              <Home className="h-3 w-3" /> {/* Reduced icon size from h-4 w-4 to h-3 w-3 */}
+                              <span>{listing.area_size_sqm} sqft</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Location */}
+                        <div className="text-xs text-gray-500 mb-2"> {/* Changed from text-sm to text-xs */}
+                          <MapPin className="h-3 w-3 inline mr-1" /> {/* Reduced icon size from h-4 w-4 to h-3 w-3 */}
+                          <span className="truncate">
+                            {listing.location || "Location not specified"}
+                          </span>
+                        </div>
+
+                        {/* Price section */}
+                        <div className="mt-auto">
+                          <span
+                            className="text-lg font-bold" 
+                            style={{ color: "#3DC5A1" }}
+                          >
+                            ₦
+                            {listing.price
+                              ? Number(listing.price).toLocaleString()
+                              : "0"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                  {isNotLast && <hr className="border-t border-gray-200" />}
+                </div>
               );
             })}
           </div>

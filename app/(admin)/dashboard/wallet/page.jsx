@@ -7,18 +7,26 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { ArrowLeft, ChevronDown, Edit, Wallet, PiggyBank, Coins, CreditCard, Users, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Edit } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import Image from 'next/image';
 import DashboardStats from '../_components/DashboardStats';
 import { walletAPI } from '@/utils/api/wallet';
 import { toast } from 'react-hot-toast';
 import CurrencyConverter from '@/components/CurrencyConverter';
+import { useRouter } from 'next/navigation';
 
 export default function WalletPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  
+  // Add the missing handleBack function
+  const handleBack = () => {
+    router.back();
+  };
   
   // State for API data with default values
   const [walletStats, setWalletStats] = useState({
@@ -150,12 +158,22 @@ export default function WalletPage() {
   const [showEscrow, setShowEscrow] = useState(false);
 
   return (
-    <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+    <div className="p-6 md:p-10 bg-white min-h-screen">
       {!showEscrow ? (
         <>
-          {/* Header */}
+          {/* Header with Go Back Button */}
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleBack}
+                variant="ghost"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 p-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Go back
+              </Button>
+              <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
+            </div>
             <div className="flex items-center gap-4">
               <Button 
                 onClick={() => setShowEscrow(true)}
@@ -179,21 +197,23 @@ export default function WalletPage() {
                   title="Total Wallet Balance"
                   value={walletStats.totalBalance}
                   subtitle="↗ +6% ↘ -3%"
-                  icon={<Wallet className="w-4 h-4 text-green-600" />}
+                  icon={<Image src="/Frame 427321717.svg" alt="Wallet Balance" width={40} height={40} />}
+                  showCurrencyDropdown={true}
                 />
 
                 <DashboardStats
                   title="Total Rent Savings"
                   value={walletStats.totalSavings}
                   subtitle="From 400 active tenants"
-                  icon={<PiggyBank className="w-4 h-4 text-blue-600" />}
+                  icon={<Image src="/Frame 162465.svg" alt="Rent Savings" width={40} height={40} />}
+                  showCurrencyDropdown={true}
                 />
 
                 <DashboardStats
                   title="Total TRC Circulating"
                   value={walletStats.totalTRC}
                   subtitle="600,000 worth earned via tasks"
-                  icon={<Coins className="w-4 h-4 text-green-600" />}
+                  icon={<Image src="/Frame 427321345.svg" alt="TRC Circulating" width={40} height={40} />}
                 />
 
                 {/* Row 2 */}
@@ -201,28 +221,30 @@ export default function WalletPage() {
                   title="Escrow Transactions"
                   value={walletStats.escrowTransactions}
                   subtitle="Pending landlord approval"
-                  icon={<CreditCard className="w-4 h-4 text-green-600" />}
+                  icon={<Image src="/Frame 427321717-2.svg" alt="Escrow Transactions" width={40} height={40} />}
+                  showCurrencyDropdown={true}
                 />
 
                 <DashboardStats
                   title="Auto-Save Enabled"
                   value={walletStats.autoSaveEnabled}
                   subtitle="₦1.5M saved automatically"
-                  icon={<Users className="w-4 h-4 text-blue-600" />}
+                  icon={<Image src="/Frame 427321718.svg" alt="Auto Save" width={40} height={40} />}
                 />
 
                 <DashboardStats
                   title="TRC Redeemed to Wallet"
                   value={walletStats.trcRedeemed}
                   subtitle="From 80,000 TRC earned"
-                  icon={<BarChart3 className="w-4 h-4 text-green-600" />}
+                  icon={<Image src="/Frame 427321718-2.svg" alt="TRC Redeemed" width={40} height={40} />}
+                  showCurrencyDropdown={true}
                 />
               </div>
             </div>
 
             {/* Right Side - TRC Distribution Chart */}
             <div className="lg:col-span-1">
-              <Card className="bg-white border-0 shadow-sm h-full">
+              <Card className="bg-white border-1 shadow-sm h-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold">TRC Earning Distribution</CardTitle>
                 </CardHeader>
@@ -285,35 +307,20 @@ export default function WalletPage() {
             </div>
           </div>
           
-          {/* Currency Converter Card */}
-          <Card className="bg-white border-0 shadow-sm mb-8">
-            <CardHeader className="border-b border-gray-100 pb-4">
-              <CardTitle className="text-lg font-semibold">Currency Converter</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <CurrencyConverter 
-                initialAmount={1000} 
-                initialFromCurrency="NGN" 
-                initialToCurrency="USD" 
-                onConversionComplete={(result) => {
-                  console.log('Conversion completed:', result);
-                }}
-              />
-            </CardContent>
-          </Card>
-
+        
+          
           {/* Admin Finance Console */}
           <Card className="bg-white border-0 shadow-sm">
             <CardHeader className="border-b border-gray-100 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4">
                 <CardTitle className="text-lg font-semibold">Admin Finance Console</CardTitle>
                 <div className="flex items-center gap-4">
-                  <div className="relative">
+                  <div className="relative flex-1 max-w-md">
                     <Input
                       placeholder="Search"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-4 pr-4 py-2 border border-gray-200 rounded-lg w-64"
+                      className="pl-4 pr-4 py-2 border border-gray-200 rounded-lg"
                     />
                   </div>
                   <Button variant="outline" className="flex items-center gap-2">
@@ -327,15 +334,15 @@ export default function WalletPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="text-left font-medium text-gray-600">User</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Type</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Category</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Date</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Amount</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Note</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Status</TableHead>
-                      <TableHead className="text-left font-medium text-gray-600">Action</TableHead>
+                    <TableRow className="bg-purple-50">
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">User</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Type</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Category</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Date</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Amount</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Note</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Status</TableHead>
+                      <TableHead className="text-left font-medium text-gray-600 py-4 px-6">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -343,19 +350,19 @@ export default function WalletPage() {
                       // Skeleton rows for loading state
                       Array.from({ length: 5 }).map((_, index) => (
                         <TableRow key={index}>
-                          <TableCell>
+                          <TableCell className="py-4 px-6">
                             <div className="flex items-center gap-3">
-                              <Skeleton className="w-8 h-8 rounded-full" />
+                              <Skeleton className="w-10 h-10 rounded-full" />
                               <Skeleton className="h-4 w-24" />
                             </div>
                           </TableCell>
-                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                          <TableCell className="py-4 px-6"><Skeleton className="h-8 w-8 rounded" /></TableCell>
                         </TableRow>
                       ))
                     ) : transactions.length === 0 ? (
@@ -366,39 +373,54 @@ export default function WalletPage() {
                       </TableRow>
                     ) : (
                       transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
+                        <TableRow key={transaction.id} className="border-b border-gray-100">
+                          <TableCell className="py-4 px-6">
                             <div className="flex items-center gap-3">
-                              <Avatar className="w-8 h-8">
+                              <Avatar className="w-10 h-10">
                                 <AvatarImage src={transaction.avatar} />
-                                <AvatarFallback>{transaction.user.charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="bg-yellow-100 text-yellow-800 font-medium">
+                                  {transaction.user.charAt(0)}
+                                </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">{transaction.user}</span>
+                              <span className="font-medium text-gray-900">{transaction.user}</span>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <TableCell className="py-4 px-6">
+                            <Badge 
+                              variant="outline" 
+                              className={`${
+                                transaction.type === 'Flag' 
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                  : transaction.type === 'Credit'
+                                  ? 'bg-green-50 text-green-700 border-green-200'
+                                  : 'bg-red-50 text-red-700 border-red-200'
+                              }`}
+                            >
                               {transaction.type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-gray-600">{transaction.category}</TableCell>
-                          <TableCell className="text-gray-600">{transaction.date}</TableCell>
-                          <TableCell className="font-medium" style={{ color: '#3DC5A1' }}>{transaction.amount}</TableCell>
-                          <TableCell className="text-gray-600">{transaction.note}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-gray-600 py-4 px-6">{transaction.category}</TableCell>
+                          <TableCell className="text-gray-600 py-4 px-6">{transaction.date}</TableCell>
+                          <TableCell className="font-medium py-4 px-6" style={{ color: '#3DC5A1' }}>
+                            {transaction.amount}
+                          </TableCell>
+                          <TableCell className="text-gray-600 py-4 px-6 max-w-xs truncate">
+                            {transaction.note}
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
                             <Badge 
                               className={`${
                                 transaction.status === 'Pending' 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : 'bg-green-100 text-green-800'
+                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200' 
+                                  : 'bg-green-100 text-green-800 border-green-200'
                               }`}
                             >
                               {transaction.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="w-4 h-4" />
+                          <TableCell className="py-4 px-6">
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <Edit className="w-4 h-4 text-gray-500" />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -491,7 +513,7 @@ export default function WalletPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
+                    <TableRow className="bg-white">
                       <TableHead className="text-left font-medium text-gray-600">Tenant Name</TableHead>
                       <TableHead className="text-left font-medium text-gray-600">Property</TableHead>
                       <TableHead className="text-left font-medium text-gray-600">Amount</TableHead>

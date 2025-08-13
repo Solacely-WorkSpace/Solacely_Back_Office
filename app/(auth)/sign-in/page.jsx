@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -18,6 +18,8 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
   const { login, verify2FA, is2FARequired } = useAuth();
   const router = useRouter();
 
@@ -56,44 +58,75 @@ export default function SignInPage() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    
+    // Validate email
+    if (name === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      setIsEmailValid(emailRegex.test(value));
+    }
+    
+    // Validate password (non-empty for now)
+    if (name === "password") {
+      setIsPasswordValid(value.length > 0);
+    }
   };
 
   return (
-    <section className="min-h-screen bg-white">
-      <div className="lg:grid lg:min-h-screen lg:grid-cols-12">
-        {/* Left Side - Image */}
-        <section className="relative flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 lg:col-span-7 lg:h-full xl:col-span-7">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500 rounded-full opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-400 rounded-full opacity-20 translate-x-1/2 translate-y-1/2"></div>
-            <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-300 rounded-full opacity-10"></div>
-          </div>
-
-          <div className="relative z-10 w-full h-full flex items-center justify-center">
-            <Image
-              src="/Left-paw.png"
-              alt="Solacely Logo"
-              fill
-              className="object-contain p-8"
-              priority
-            />
+    <section className="min-h-screen bg-white flex">
+      <div className="flex min-h-screen w-full">
+        {/* Left Side - Background Image */}
+        <section className="relative hidden lg:flex lg:w-1/2">
+          <Image 
+            src="/Bg.png" 
+            alt="Background" 
+            fill 
+            className="object-cover"
+            priority 
+          />
+          <div className="absolute inset-0 flex flex-col justify-between p-12 z-10">
+            {/* Center image - property card illustration */}
+            <div className="flex-grow flex items-center justify-center">
+              <div className="relative w-[500px]">
+                <Image 
+                  src="/Frame 33337.png" 
+                  alt="Solacely Illustration" 
+                  width={450} 
+                  height={450} 
+                  className="object-contain" 
+                  priority 
+                />
+              </div>
+            </div>
+            
+           
           </div>
         </section>
 
         {/* Right Side - Sign In Form */}
-        <main className="flex items-center justify-center px-8 py-8 sm:px-12 lg:col-span-5 lg:px-16 lg:py-12 xl:col-span-5">
-          <div className="max-w-xl lg:max-w-3xl w-full">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Sign in to your account
+        <main className="flex flex-col items-center justify-center px-8 py-8 sm:px-12 w-full lg:w-1/2 relative">
+          <div className="absolute top-4 right-4">
+            <div className="relative w-[140px] h-[32px]">
+              <Image 
+                src="/icons/Frame 33340.svg" 
+                alt="Solacely Logo" 
+                width={140}
+                height={32}
+                className="object-contain"
+                priority 
+              />
+            </div>
+          </div>
+          
+          <div className="max-w-sm w-full mx-auto">  {/* Changed from max-w-md to max-w-sm and added mx-auto */}
+            <div className="mb-10 text-center">  {/* Added text-center */}
+              <h2 className="text-3xl font-bold text-gray-900">
+                Sign in to Solacely
               </h2>
-              <p className="text-gray-600">
-                Welcome back! Please enter your details.
-              </p>
             </div>
 
             {!showTwoFactor ? (
@@ -101,28 +134,35 @@ export default function SignInPage() {
                 <div>
                   <Label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-xs font-medium text-gray-700 mb-2 uppercase"
                   >
-                    Email address
+                    EMAIL
                   </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter your email"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none ${isEmailValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-purple-500 focus:border-purple-500'}`}
+                      placeholder="Email address"
+                    />
+                    {isEmailValid && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <Check className="h-5 w-5 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <Label
                     htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-xs font-medium text-gray-700 mb-2 uppercase"
                   >
-                    Password
+                    PASSWORD
                   </Label>
                   <div className="relative">
                     <Input
@@ -132,36 +172,41 @@ export default function SignInPage() {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Enter your password"
+                      className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none ${isPasswordValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-purple-500 focus:border-purple-500'}`}
+                      placeholder="Enter password"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      {isPasswordValid && (
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
                       )}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-end">
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-purple-600 hover:text-purple-500"
+                    className="text-sm text-green-500 hover:text-green-600"
                   >
-                    Forgot your password?
+                    Forgot password?
                   </Link>
                 </div>
 
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#521282] hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+                  className="w-full bg-[#521282] hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center mt-4"
                 >
                   {loading ? (
                     <>
@@ -169,7 +214,7 @@ export default function SignInPage() {
                       Signing in...
                     </>
                   ) : (
-                    "Sign in"
+                    "Login"
                   )}
                 </Button>
               </form>
@@ -178,7 +223,7 @@ export default function SignInPage() {
                 <div>
                   <Label
                     htmlFor="twoFactorCode"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-gray-700 mb-2 uppercase"
                   >
                     Two-Factor Authentication Code
                   </Label>
@@ -210,8 +255,6 @@ export default function SignInPage() {
                 </Button>
               </form>
             )}
-
-            <div className="mt-6 text-center"></div>
           </div>
         </main>
       </div>
