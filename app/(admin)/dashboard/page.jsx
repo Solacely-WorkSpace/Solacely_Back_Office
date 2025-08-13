@@ -191,35 +191,35 @@ function AdminDashboard() {
               <p className="text-xs text-gray-400 mt-0.5 leading-tight">No data</p>
             )}
           </div>
-          <div className="p-1.5 bg-green-50 rounded-lg flex-shrink-0">
-          <img src="/Frame 162465-4.png" alt="Total Customers" className="h-6 w-6" />
+          <div className="flex-shrink-0">
+            <img src="/Frame 162465-4.png" alt="Total Properties" className="h-8 w-8" />
           </div>
         </div>
         
-        {/* Second Row: Property Types in 4 Columns */}
-        <div className="grid grid-cols-4 gap-0.5 mt-1">
+        {/* Second Row: Property Types in 4 Columns with better spacing */}
+        <div className="grid grid-cols-4 gap-1 mt-1">
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Apt</div>
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight">Apartment</div>
             <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes.apartment}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Co-work</div>
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight">Co-working</div>
             <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes['co-working']}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Hotel</div>
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight">Hotel</div>
             <div className="text-xs font-semibold text-gray-900 leading-tight">
               {stats.propertyTypes.hotel}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500 mb-0.5 leading-tight truncate">Estate</div>
+            <div className="text-xs text-gray-500 mb-0.5 leading-tight">Real Estate</div>
             <div className="text-xs font-semibold text-gray-900 leading-tight">
-              {stats.propertyTypes['real estate']}
+              {stats.propertyTypes.estate || 0}
             </div>
           </div>
         </div>
@@ -229,12 +229,11 @@ function AdminDashboard() {
 
   return (
     <div className="p-6">
-      {/* Stats Cards - Updated layout with consistent sizing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      {/* Stats Cards - Using flexbox for better control */}
+      <div className="flex flex-wrap justify-center gap-6 mb-6">
         <DashboardStats 
           title="Total Customers" 
           value={stats.totalCustomers.toLocaleString()} 
-         
           change="+2.1%"
           icon={<img src="/Frame 162465.png" alt="Total Customers" className="h-6 w-6" />} 
           loading={loading}
@@ -243,24 +242,23 @@ function AdminDashboard() {
         <DashboardStats 
           title="Total Amount" 
           value={`₦${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-         
           change="+0.8%"
-          icon={<img src="/Frame 162465-2.png" alt="Total Customers" className="h-6 w-6" />} 
+          icon={<img src="/Frame 162465-2.png" alt="Total Amount" className="h-6 w-6" />} 
           loading={loading}
           showDate={true}
         />
         <DashboardStats 
           title="Total Reports" 
           value={stats.totalReports.toLocaleString()}
-         
           change="+1.2%"
-          icon={<img src="/Frame 162465-3.png" alt="Total Customers" className="h-6 w-6" />} 
+          icon={<img src="/Frame 162465-3.png" alt="Total Reports" className="h-6 w-6" />} 
           loading={loading}
           showDate={true}
         />
         <DashboardStats 
           loading={loading}
           customContent={<TotalPropertiesContent />}
+          isWide={true}
         />
       </div>
       
