@@ -70,11 +70,20 @@ export const adminAPI = {
   },
 
   updatePartner: async (partnerId, partnerData) => {
-    return await apiClient.put(`/api/v1/admin/partners/${partnerId}/`, partnerData);
+    return await apiClient.patch(`/api/v1/admin/partners/${partnerId}/update/`, partnerData);
   },
 
   deletePartner: async (partnerId) => {
     return await apiClient.delete(`/api/v1/admin/partners/${partnerId}/`);
+  },
+  
+  // Add these new methods for partner verification
+  verifyPartner: async (partnerId) => {
+    return await apiClient.post(`/api/v1/admin/partners/${partnerId}/verify/`);
+  },
+  
+  rejectPartner: async (partnerId, reason) => {
+    return await apiClient.post(`/api/v1/admin/partners/${partnerId}/reject/`, { reason });
   },
 
   // Listing Management

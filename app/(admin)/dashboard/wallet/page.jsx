@@ -172,7 +172,7 @@ export default function WalletPage() {
                 <ArrowLeft className="w-4 h-4" />
                 Go back
               </Button>
-              <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
+          
             </div>
             <div className="flex items-center gap-4">
               <Button 
@@ -188,9 +188,9 @@ export default function WalletPage() {
           </div>
 
           {/* Stats and TRC Distribution Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 items-stretch gap-4 mb-8">
             {/* Left Side - Statistics Cards (3 columns, 2 rows) */}
-            <div className="lg:col-span-3">
+            <div className="md:col-span-3 h-full">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-2 h-full">
                 {/* Row 1 */}
                 <DashboardStats
@@ -243,33 +243,32 @@ export default function WalletPage() {
             </div>
 
             {/* Right Side - TRC Distribution Chart */}
-            <div className="lg:col-span-1">
-              <Card className="bg-white border-1 shadow-sm h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold">TRC Earning Distribution</CardTitle>
+            <div className="md:col-span-1 min-w-0">
+              <Card className="bg-white border-1 shadow-sm h-auto md:max-h-[300px] lg:max-h-[350px] flex flex-col">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm sm:text-base font-semibold">TRC Earning Distribution</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3 flex flex-col gap-2">
                   {!isDataLoaded ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-[200px] w-full rounded-full" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
+                    <div className="space-y-3">
+                      <Skeleton className="h-[120px] w-full rounded-full" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className="relative">
-                        <ResponsiveContainer width="100%" height={200}>
+                      <div className="relative h-32 sm:h-36 md:h-32 lg:h-36">
+                        <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
                               data={trcChartData}
                               cx="50%"
                               cy="50%"
-                              innerRadius={70}
-                              outerRadius={77}
-                              paddingAngle={5}
+                              innerRadius="70%"
+                              outerRadius="78%"
+                              paddingAngle={3}
                               dataKey="value"
                             >
                               {trcChartData.map((entry, index) => (
@@ -280,23 +279,23 @@ export default function WalletPage() {
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="text-center">
-                            <div className="text-2xl font-bold">{(totalTRC / 1000).toFixed(0)}K</div>
-                            <div className="text-sm text-gray-500">Total TRC</div>
+                            <div className="text-lg sm:text-xl font-bold">{(totalTRC / 1000).toFixed(0)}K</div>
+                            <div className="text-[10px] sm:text-xs text-gray-500">Total TRC</div>
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="mt-4 space-y-2">
+
+                      <div className="mt-2 space-y-1">
                         {trcChartData.map((item, index) => (
                           <div key={index} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div 
-                                className="w-3 h-3 rounded-full" 
+                            <div className="flex items-center space-x-2 min-w-0">
+                              <div
+                                className="w-3 h-3 rounded-full shrink-0"
                                 style={{ backgroundColor: item.color }}
-                              ></div>
-                              <span className="text-sm text-gray-600">{item.name}</span>
+                              />
+                              <span className="text-[11px] sm:text-xs text-gray-600 truncate">{item.name}</span>
                             </div>
-                            <span className="text-sm font-medium">{item.value}%</span>
+                            <span className="text-[11px] sm:text-xs font-medium">{item.value}%</span>
                           </div>
                         ))}
                       </div>
@@ -306,9 +305,7 @@ export default function WalletPage() {
               </Card>
             </div>
           </div>
-          
-        
-          
+
           {/* Admin Finance Console */}
           <Card className="bg-white border-0 shadow-sm">
             <CardHeader className="border-b border-gray-100 pb-4">

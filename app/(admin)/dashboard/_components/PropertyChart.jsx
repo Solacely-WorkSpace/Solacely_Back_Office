@@ -41,40 +41,28 @@ function PropertyChart() {
               location = locationParts[0].trim();
             }
 
-            // Clean up common location names
-            if (location.toLowerCase().includes("lagos")) {
-              location = "Lagos";
-            } else if (location.toLowerCase().includes("abuja")) {
-              location = "Abuja";
-            } else if (location.toLowerCase().includes("kano")) {
-              location = "Kano";
-            } else if (location.toLowerCase().includes("kaduna")) {
-              location = "Kaduna";
-            }
-
+            // Count all locations dynamically
             locationCounts[location] = (locationCounts[location] || 0) + 1;
           }
         });
 
-        // Convert to chart data format
-        const total = listings.length;
-        setTotalListings(total);
+        // Convert to array and sort by count (descending)
+        const sortedLocations = Object.entries(locationCounts)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value);
 
-        // Ensure we have the four main locations we want to display
-        const mainLocations = ["Lagos", "Kano", "Abuja", "Kaduna"];
-        mainLocations.forEach((loc) => {
-          if (!locationCounts[loc]) {
-            locationCounts[loc] = 0;
-          }
-        });
+        // Get top 4 locations
+        const top4Locations = sortedLocations.slice(0, 4);
 
-        // Create chart data with our four main locations
-        const chartData = mainLocations.map((name, index) => ({
-          name,
-          value: locationCounts[name],
+        // Add colors to the top 4 locations
+        const chartData = top4Locations.map((item, index) => ({
+          ...item,
           color: colors[index % colors.length],
         }));
 
+        // Calculate total visitors
+        const total = listings.length;
+        setTotalListings(total);
         setData(chartData);
       }
     } catch (error) {
@@ -84,10 +72,10 @@ function PropertyChart() {
         { name: "Lagos", value: 2500, color: colors[0] },
         { name: "Kano", value: 2200, color: colors[1] },
         { name: "Abuja", value: 1300, color: colors[2] },
-        { name: "Kaduna", value: 18000, color: colors[3] },
+        { name: "Kaduna", value: 1800, color: colors[3] },
       ];
       setData(fallbackData);
-      setTotalListings(24000);
+      setTotalListings(7800);
     } finally {
       setLoading(false);
     }
@@ -107,7 +95,9 @@ function PropertyChart() {
 
   if (loading) {
     return (
-      <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto"> {/* Increased from 300px to 380px width and 350px to 420px height */}
+      <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto">
+        {" "}
+        {/* Increased from 300px to 380px width and 350px to 420px height */}
         <CardHeader className="flex justify-center items-center pb-2">
           <div className="flex items-center justify-center space-x-20">
             <button className="text-gray-400 hover:text-gray-600">
@@ -146,9 +136,15 @@ function PropertyChart() {
         <CardContent className="pt-4 pb-2 px-3">
           {/* Skeleton for pie chart */}
           <div className="relative">
-            <div className="w-full h-[240px] flex items-center justify-center"> {/* Increased from 200px to 240px */}
-              <div className="w-[200px] h-[200px] rounded-full bg-gray-100 animate-pulse flex items-center justify-center"> {/* Increased from 180px to 200px */}
-                <div className="w-[160px] h-[160px] rounded-full bg-white flex items-center justify-center"> {/* Increased from 140px to 160px */}
+            <div className="w-full h-[240px] flex items-center justify-center">
+              {" "}
+              {/* Increased from 200px to 240px */}
+              <div className="w-[200px] h-[200px] rounded-full bg-gray-100 animate-pulse flex items-center justify-center">
+                {" "}
+                {/* Increased from 180px to 200px */}
+                <div className="w-[160px] h-[160px] rounded-full bg-white flex items-center justify-center">
+                  {" "}
+                  {/* Increased from 140px to 160px */}
                   <div className="w-20 h-6 bg-gray-200 animate-pulse rounded-md"></div>
                 </div>
               </div>
@@ -156,7 +152,9 @@ function PropertyChart() {
           </div>
 
           {/* Skeleton for 2x2 grid */}
-          <div className="mt-4 grid grid-cols-2 gap-2 pb-1 mx-auto w-[280px]"> {/* Increased from 240px to 280px */}
+          <div className="mt-4 grid grid-cols-2 gap-2 pb-1 mx-auto w-[280px]">
+            {" "}
+            {/* Increased from 240px to 280px */}
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={index}
@@ -176,7 +174,9 @@ function PropertyChart() {
   }
 
   return (
-    <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto"> {/* Increased from 300px to 380px width and 350px to 420px height */}
+    <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto">
+      {" "}
+      {/* Increased from 300px to 380px width and 350px to 420px height */}
       <CardHeader className="flex justify-center items-center pb-2">
         {/* Year selector with left/right arrows */}
         <div className="flex items-center justify-center space-x-20">
@@ -221,14 +221,14 @@ function PropertyChart() {
       </CardHeader>
       <CardContent className="pt-4 pb-2 px-3">
         <div className="relative">
-          <ResponsiveContainer width="100%" height={240}> 
+          <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={90} 
-                outerRadius={100} 
+                innerRadius={90}
+                outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
                 strokeWidth={4}
@@ -241,18 +241,25 @@ function PropertyChart() {
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl font-bold"> {/* Increased from text-2xl to text-3xl */}
+              <div className="text-3xl font-bold">
+                {" "}
+                {/* Increased from text-2xl to text-3xl */}
                 {totalListings.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Visitors this year</div> {/* Increased from text-xs to text-sm */}
+              <div className="text-sm text-gray-500">Visitors this year</div>{" "}
+              {/* Increased from text-xs to text-sm */}
             </div>
           </div>
         </div>
 
         {/* 2x2 grid layout with centered items and wider spacing between name and value */}
-        <div className="mt-4 grid grid-cols-2 gap-6 pb-1 mx-auto w-[320px]"> {/* Increased gap from gap-2 to gap-6 and width from 280px to 320px */}
+        <div className="mt-4 grid grid-cols-2 gap-6 pb-1 mx-auto w-[320px]">
+          {" "}
+          {/* Increased gap from gap-2 to gap-6 and width from 280px to 320px */}
           {data.map((item, index) => (
-            <div key={index} className="flex items-center justify-start px-2"> {/* Changed from justify-between to justify-start */}
+            <div key={index} className="flex items-center justify-start px-2">
+              {" "}
+              {/* Changed from justify-between to justify-start */}
               <div className="flex items-center">
                 <div
                   className="w-2 h-2 rounded-full mr-1.5"
@@ -260,7 +267,9 @@ function PropertyChart() {
                 ></div>
                 <span className="text-sm text-gray-600">{item.name}</span>
               </div>
-              <span className="text-sm font-medium ml-3"> {/* Increased margin from ml-1 to ml-3 to bring name and value closer */}
+              <span className="text-sm font-medium ml-3">
+                {" "}
+                {/* Increased margin from ml-1 to ml-3 to bring name and value closer */}
                 {formatNumber(item.value)}
               </span>
             </div>

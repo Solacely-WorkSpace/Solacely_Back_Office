@@ -65,8 +65,8 @@ function DashboardStats({
   return (
     <Card
       className={cn(
-        "border border-gray-200 bg-white h-40",
-        isWide ? "w-full max-w-[420px]" : "w-full max-w-[240px]",
+        // Make the card fill the grid cell, avoid overflow, and keep height stable on tablet+
+        "border border-gray-200 bg-white min-w-0 w-full h-auto md:h-40",
         className
       )}
     >

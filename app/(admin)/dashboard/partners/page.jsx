@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Eye } from 'lucide-react';
+import { Search, Plus, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,13 @@ function PartnersManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [partners, setPartners] = useState([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // Add state for tracking verification actions
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [selectedPartnerId, setSelectedPartnerId] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
 
   // Fetch partners data from API
   useEffect(() => {
@@ -58,7 +65,7 @@ function PartnersManagement() {
     { id: 'Agent', label: 'Agent', count: partners.filter(p => p.business_type === 'individual').length },
     { id: 'Agency', label: 'Agency', count: partners.filter(p => p.business_type === 'agency').length },
     { id: 'Landlords', label: 'Landlords', count: partners.filter(p => p.business_type === 'developer' || p.business_type === 'other').length },
-    { id: 'Verification', label: 'Verification', count: 0, badge: true }
+    { id: 'Verification', label: 'Verification', count: partners.filter(p => p.status === 'pending').length, badge: true }
   ];
 
   // Skeleton component for table rows
@@ -87,6 +94,51 @@ function PartnersManagement() {
       </td>
     </tr>
   );
+  
+  // Add verification handler
+  const handleVerifyPartner = async (partnerId) => {
+    setIsVerifying(true);
+    setSelectedPartnerId(partnerId);
+    try {
+      await adminAPI.verifyPartner(partnerId);
+      toast.success('Partner verified successfully');
+      // Refresh the partners list
+      const response = await adminAPI.getPartners();
+      setPartners(response.data || []);
+    } catch (error) {
+      console.error('Error verifying partner:', error);
+      toast.error(error.message || 'Failed to verify partner');
+    } finally {
+      setIsVerifying(false);
+      setSelectedPartnerId(null);
+    }
+  };
+  
+  // Add rejection handler
+  const handleRejectPartner = async (partnerId) => {
+    setIsRejecting(true);
+    try {
+      await adminAPI.rejectPartner(partnerId, rejectionReason);
+      toast.success('Partner rejected successfully');
+      setShowRejectionModal(false);
+      setRejectionReason('');
+      // Refresh the partners list
+      const response = await adminAPI.getPartners();
+      setPartners(response.data || []);
+    } catch (error) {
+      console.error('Error rejecting partner:', error);
+      toast.error(error.message || 'Failed to reject partner');
+    } finally {
+      setIsRejecting(false);
+      setSelectedPartnerId(null);
+    }
+  };
+  
+  // Add function to open rejection modal
+  const openRejectionModal = (partnerId) => {
+    setSelectedPartnerId(partnerId);
+    setShowRejectionModal(true);
+  };
 
   return (
     <div className="p-6 md:p-10">
@@ -139,14 +191,9 @@ function PartnersManagement() {
         </div>
       </div>
 
-      {/* Content */}
       <Card>
         <CardContent className="p-0">
-          {activeTab === 'Verification' ? (
-            <div className="p-6 text-center text-gray-500">
-              Verification content coming soon...
-            </div>
-          ) : (
+          {activeTab !== 'Verification' ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b bg-gray-50/50">
@@ -169,7 +216,7 @@ function PartnersManagement() {
                     ))
                   ) : filteredPartners.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="p-8 text-center text-gray-500">
+                      <td colSpan="6" className="p-8 text-center text-gray-500">
                         No {activeTab.toLowerCase()} found
                       </td>
                     </tr>
@@ -194,13 +241,111 @@ function PartnersManagement() {
                         <td className="p-4 text-gray-600">{partner.phone_number}</td>
                         <td className="p-4 text-gray-600">{partner.location_region}</td>
                         <td className="p-4">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-[#521282] border-[#521282] hover:bg-[#521282] hover:text-white"
-                          >
-                            View
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-[#521282] border-[#521282] hover:bg-[#521282] hover:text-white"
+                            >
+                              View
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-[#521282] border-[#521282] hover:bg-[#521282] hover:text-white"
+                              asChild
+                            >
+                              <Link href={`/dashboard/partners/edit/${partner.id}`}>Edit</Link>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b bg-gray-50/50">
+                  <tr>
+                    <th className="text-left p-4 font-medium text-gray-700">Full Name</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Email</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Status</th>
+                    <th className="text-left p-4 font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!isDataLoaded ? (
+                    // Show skeleton rows while loading
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <SkeletonRow key={index} />
+                    ))
+                  ) : partners.filter(p => p.status === 'pending').length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="p-8 text-center text-gray-500">
+                        No pending partners found
+                      </td>
+                    </tr>
+                  ) : (
+                    partners.filter(p => p.status === 'pending').map((partner) => (
+                      <tr key={partner.id} className="border-b hover:bg-gray-50/50 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src="" />
+                              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                                {partner.partner_name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium text-gray-900 block">{partner.partner_name}</span>
+                              <Badge className={`${partner.status === 'pending' ? 'bg-yellow-500' : partner.status === 'verified' ? 'bg-green-500' : 'bg-red-500'} text-white text-xs mt-1`}>
+                                {partner.status === 'pending' ? 'Pending' : partner.status === 'verified' ? 'Verified' : 'Rejected'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-gray-600">{partner.email}</td>
+                        <td className="p-4">
+                          <Badge className={`${partner.status === 'pending' ? 'bg-yellow-500' : partner.status === 'verified' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                            {partner.status === 'pending' ? 'Pending' : partner.status === 'verified' ? 'Verified' : 'Rejected'}
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                              onClick={() => handleVerifyPartner(partner.id)}
+                              disabled={isVerifying && selectedPartnerId === partner.id}
+                            >
+                              {isVerifying && selectedPartnerId === partner.id ? (
+                                <span className="flex items-center">Verifying...</span>
+                              ) : (
+                                <span className="flex items-center">
+                                  <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                                </span>
+                              )}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                              onClick={() => openRejectionModal(partner.id)}
+                              disabled={isRejecting && selectedPartnerId === partner.id}
+                            >
+                              {isRejecting && selectedPartnerId === partner.id ? (
+                                <span className="flex items-center">Rejecting...</span>
+                              ) : (
+                                <span className="flex items-center">
+                                  <XCircle className="h-4 w-4 mr-1" /> Reject
+                                </span>
+                              )}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -211,20 +356,39 @@ function PartnersManagement() {
           )}
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      {isDataLoaded && filteredPartners.length > 0 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-gray-600">
-            Showing 1 to {filteredPartners.length} of {filteredPartners.length} results
-          </p>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" disabled>
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" disabled={filteredPartners.length < 10}>
-              Next
-            </Button>
+      
+      {/* Rejection Modal */}
+      {showRejectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium mb-4">Reject Partner</h3>
+            <p className="text-gray-600 mb-4">Please provide a reason for rejecting this partner:</p>
+            <textarea 
+              className="w-full border rounded-md p-2 mb-4"
+              rows="4"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+            />
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowRejectionModal(false);
+                  setRejectionReason('');
+                  setSelectedPartnerId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => handleRejectPartner(selectedPartnerId)}
+                disabled={!rejectionReason.trim() || isRejecting}
+              >
+                {isRejecting ? 'Rejecting...' : 'Reject Partner'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -296,6 +296,7 @@ function UsersManagement() {
                                 size="sm"
                                 variant="outline"
                                 className="border-purple-200 text-purple-600 hover:bg-purple-50 flex items-center gap-1"
+                                onClick={() => router.push(`/dashboard/users/${user.id}`)}
                               >
                                 <Edit className="h-3 w-3" />
                                 Edit
