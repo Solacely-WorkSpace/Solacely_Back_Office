@@ -199,22 +199,22 @@ function UserDetailView({ params }) {
               Activate
             </Button>
           )}
-          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogTrigger asChild>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
               <Button variant="destructive" className="flex items-center gap-2">
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Are you sure you want to delete this user?</DialogTitle>
-              </DialogHeader>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to delete this user?</AlertDialogTitle>
+              </AlertDialogHeader>
               <p className="text-gray-600 py-4">
                 This action cannot be undone. This will permanently delete the user account
                 and all associated data.
               </p>
-              <DialogFooter>
+              <AlertDialogFooter>
                 <Button
                   variant="outline"
                   onClick={() => setDeleteDialogOpen(false)}
@@ -227,9 +227,9 @@ function UserDetailView({ params }) {
                 >
                   Delete User
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
