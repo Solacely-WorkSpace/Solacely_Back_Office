@@ -42,7 +42,7 @@ function UsersManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await usersAPI.getUsers();
+      const response = await usersAPI.getUsers({ is_staff: true });
       setUsers(response.results || response);
     } catch (error) {
       console.error("Error fetching users:", error);

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { adminAPI } from '@/utils/api/admin';
 import { useRouter } from 'next/navigation';
 
-function AddNewAgent() {
+function AddNewLandlord() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,15 +21,15 @@ function AddNewAgent() {
     whatsapp: '',
     email: '',
     location: '',
-    workAddress: '',
-    agency: '',
+    propertyAddress: '',
+    propertyType: '',
     profileImage: null,
-    workDocument: null
+    propertyDocument: null
   });
   
   // Refs for file inputs
   const profileImageInputRef = useRef(null);
-  const workDocumentInputRef = useRef(null);
+  const propertyDocumentInputRef = useRef(null);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -45,7 +45,7 @@ function AddNewAgent() {
         ...prev,
         [field]: file
       }));
-      toast.success(`${field === 'profileImage' ? 'Profile image' : 'Work document'} selected`);
+      toast.success(`${field === 'profileImage' ? 'Profile image' : 'Property document'} selected`);
     }
   };
 
@@ -67,7 +67,7 @@ function AddNewAgent() {
         full_name: `${formData.firstName} ${formData.lastName}`,
         phone_number: formData.phoneNumber,
         email: formData.email,
-        business_type: 'Agent',
+        business_type: 'Landlord',
         location_region: formData.location,
         company_website: null
       };
@@ -85,18 +85,18 @@ function AddNewAgent() {
         formDataWithFiles.append('profile_image', formData.profileImage);
       }
       
-      if (formData.workDocument) {
-        formDataWithFiles.append('work_document', formData.workDocument);
+      if (formData.propertyDocument) {
+        formDataWithFiles.append('work_document', formData.propertyDocument);
       }
       
       // Call API to create partner
       const response = await adminAPI.createPartner(formDataWithFiles);
       
-      toast.success('Agent added successfully!');
+      toast.success('Landlord added successfully!');
       router.push('/dashboard/partners');
     } catch (error) {
-      console.error('Error adding agent:', error);
-      toast.error(error.response?.data?.message || 'Failed to add agent');
+      console.error('Error adding landlord:', error);
+      toast.error(error.response?.data?.message || 'Failed to add landlord');
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +113,7 @@ function AddNewAgent() {
               Go back
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Add New Agent</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Add New Landlord</h1>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" asChild>
@@ -226,31 +226,33 @@ function AddNewAgent() {
             </div>
           </div>
 
-          {/* Work Address and Agency */}
+          {/* Property Address and Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="workAddress" className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                WORK ADDRESS
+              <Label htmlFor="propertyAddress" className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+                PROPERTY ADDRESS
               </Label>
               <Input
-                id="workAddress"
+                id="propertyAddress"
                 placeholder="Enter property address"
-                value={formData.workAddress}
-                onChange={(e) => handleInputChange('workAddress', e.target.value)}
+                value={formData.propertyAddress}
+                onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
                 className="h-12 border-gray-200 focus:border-[#521282] focus:ring-[#521282]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="agency" className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                AGENCY
+              <Label htmlFor="propertyType" className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+                PROPERTY TYPE
               </Label>
-              <Select onValueChange={(value) => handleInputChange('agency', value)}>
+              <Select onValueChange={(value) => handleInputChange('propertyType', value)}>
                 <SelectTrigger className="h-12 border-gray-200 focus:border-[#521282] focus:ring-[#521282]">
-                  <SelectValue placeholder="Select agency" />
+                  <SelectValue placeholder="Select property type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="agency1">Agency 1</SelectItem>
-                  <SelectItem value="agency2">Agency 2</SelectItem>
+                  <SelectItem value="apartment">Apartment</SelectItem>
+                  <SelectItem value="house">House</SelectItem>
+                  <SelectItem value="duplex">Duplex</SelectItem>
+                  <SelectItem value="commercial">Commercial</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -288,21 +290,21 @@ function AddNewAgent() {
               </div>
             </div>
 
-            {/* Upload Work Document */}
+            {/* Upload Property Document */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                UPLOAD WORK DOCUMENT
+                UPLOAD PROPERTY DOCUMENT
               </Label>
               <div 
                 className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#521282] transition-colors cursor-pointer"
-                onClick={() => workDocumentInputRef.current?.click()}
+                onClick={() => propertyDocumentInputRef.current?.click()}
               >
                 <input 
                   type="file" 
-                  ref={workDocumentInputRef}
+                  ref={propertyDocumentInputRef}
                   className="hidden" 
                   accept="application/pdf,image/jpeg,image/jpg"
-                  onChange={(e) => handleFileChange('workDocument', e)}
+                  onChange={(e) => handleFileChange('propertyDocument', e)}
                 />
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -310,7 +312,7 @@ function AddNewAgent() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {formData.workDocument ? formData.workDocument.name : 'Drop your document here, or browse'}
+                      {formData.propertyDocument ? formData.propertyDocument.name : 'Drop your document here, or browse'}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Supports PDF and JPG</p>
                   </div>
@@ -324,4 +326,4 @@ function AddNewAgent() {
   );
 }
 
-export default AddNewAgent;
+export default AddNewLandlord;

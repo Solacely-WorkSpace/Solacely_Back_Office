@@ -14,17 +14,6 @@ export const adminAPI = {
   // Revenue calculation from rent payments
   getRevenueStats: async () => {
     try {
-      // Use dummy data instead of API call to prevent errors
-      return {
-        data: {
-          total_revenue: 5000000, // 5 million (will display as ₦5.0M)
-          total_payments: 0,
-          pending_payments: 0
-        }
-      };
-      
-      // Original code commented out to preserve it for future reference
-      /*
       const response = await apiClient.get('/api/v1/wallet/monthly-revenue/');
       
       return {
@@ -34,7 +23,6 @@ export const adminAPI = {
           pending_payments: 0 
         }
       };
-      */
     } catch (error) {
       console.error('Error fetching revenue stats:', error);
       return { data: { total_revenue: 0, total_payments: 0, pending_payments: 0 } };
@@ -45,6 +33,10 @@ export const adminAPI = {
   getAllUsers: async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return await apiClient.get(`/api/v1/admin/users/${queryString ? `?${queryString}` : ''}`);
+  },
+
+  createUser: async (userData) => {
+    return await apiClient.post('/api/v1/admin/users/create/', userData);
   },
 
   updateUserStatus: async (userId, status) => {

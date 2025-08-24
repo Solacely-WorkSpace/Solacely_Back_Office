@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { adminAPI } from "@/utils/api/admin";
+import { walletAPI } from "@/utils/api/wallet";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   BarChart,
@@ -72,7 +73,7 @@ function AdminDashboard() {
       // Fetch data from multiple endpoints concurrently
       const results = await Promise.allSettled([
         adminAPI.getDashboardStats(),
-        adminAPI.getWalletStats(),
+        walletAPI.getDetailedWalletStats(),  // Updated to use the new endpoint
         adminAPI.getRevenueStats(),
         listingsAPI.getListings({ status: "available" }),
       ]);
@@ -292,9 +293,9 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="p-6">
-      {/* Stats Cards - Using CSS Grid for better responsive control */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+    <div className="p-4"> {/* Reduced padding from p-6 to p-4 */}
+      {/* Stats Cards - Using CSS Grid with smaller gaps and optimized for 1070x823 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4"> 
         <DashboardStats
           title="Total Customers"
           value={stats.totalCustomers.toLocaleString()}
@@ -303,7 +304,7 @@ function AdminDashboard() {
             <img
               src="/Frame 162465.png"
               alt="Total Customers"
-              className="h-6 w-6"
+              className="h-5 w-5" 
             />
           }
           loading={loading}
@@ -317,7 +318,7 @@ function AdminDashboard() {
             <img
               src="/Frame 162465-2.png"
               alt="Total Amount"
-              className="h-6 w-6"
+              className="h-5 w-5" 
             />
           }
           loading={loading}
@@ -331,7 +332,7 @@ function AdminDashboard() {
             <img
               src="/Frame 162465-3.png"
               alt="Total Reports"
-              className="h-6 w-6"
+              className="h-5 w-5" 
             />
           }
           loading={loading}
@@ -345,20 +346,20 @@ function AdminDashboard() {
           className="lg:col-span-2"
         />
       </div>
-
-      {/* Main Content Grid - Adjusted proportions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    
+      {/* Main Content Grid - Adjusted proportions with smaller gap */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4"> {/* Reduced gap from gap-6 to gap-4 and mb-6 to mb-4 */}
         {/* Recent Properties - Takes 2 columns */}
         <div className="lg:col-span-2">
           <RecentListings />
         </div>
-
+    
         {/* Right Sidebar - Only Visitors Chart */}
-        <div className="space-y-6">
+        <div className="space-y-4"> {/* Reduced from space-y-6 */}
           <PropertyChart />
         </div>
       </div>
-
+    
       {/* Revenue Chart - Full Width Below Recent Listings */}
       <div className="w-full">
         <RevenueChart />

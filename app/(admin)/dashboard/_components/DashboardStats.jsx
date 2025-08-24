@@ -66,14 +66,14 @@ function DashboardStats({
     <Card
       className={cn(
         // Make the card fill the grid cell, avoid overflow, and keep height stable on tablet+
-        "border border-gray-200 bg-white min-w-0 w-full h-auto md:h-40",
+        "border border-gray-200 bg-white min-w-0 w-full h-auto md:h-32", // Reduced height from md:h-40 to md:h-32
         className
       )}
     >
-      <CardContent className="p-4 h-full flex flex-col justify-between">
+      <CardContent className="p-3 h-full flex flex-col justify-between"> 
         {loading ? (
           <div className="space-y-2">
-            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-5 w-16 bg-gray-200 animate-pulse rounded"></div> 
             <div className="h-3 w-12 bg-gray-200 animate-pulse rounded"></div>
           </div>
         ) : customContent ? (
@@ -82,8 +82,8 @@ function DashboardStats({
           <div className="h-full flex flex-col justify-between">
             {/* Top section with icon and title below it */}
             <div className="flex flex-col items-start">
-              <div className="flex-shrink-0 mb-2">
-                {React.cloneElement(icon, { className: "h-10 w-10" })}
+              <div className="flex-shrink-0 mb-1"> {/* Reduced margin from mb-2 to mb-1 */}
+                {React.cloneElement(icon, { className: "h-8 w-8" })} 
               </div>
               <span className="text-xs font-medium text-gray-500 truncate">
                 {title}
@@ -91,7 +91,7 @@ function DashboardStats({
             </div>
             
             {/* Value with currency dropdown */}
-            <div className="text-xl font-bold text-gray-900 flex items-center justify-between flex-grow">
+            <div className="text-lg font-bold text-gray-900 flex items-center justify-between flex-grow"> 
               <span className="truncate">{displayValue}</span>
               {showCurrencyDropdown && value.includes('₦') && (
                 <div className="relative ml-2">

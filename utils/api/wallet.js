@@ -65,5 +65,25 @@ export const walletAPI = {
 
   updateEscrow: async (escrowId, escrowData) => {
     return await apiClient.put(`/api/v1/wallet/escrow/${escrowId}/`, escrowData);
-  }
+  },
+  
+  // New endpoints
+  getDetailedWalletStats: async () => {
+    return await apiClient.get('/api/v1/wallet/stats/');
+  },
+  
+  getMonthlyRevenue: async (year = new Date().getFullYear()) => {
+    return await apiClient.get(`/api/v1/wallet/monthly-revenue/?year=${year}`);
+  },
+  
+  // Add this method to connect with WalletTopUpView
+  topUp: async (topUpData) => {
+    return await apiClient.post('/api/v1/wallet/topup/', topUpData);
+  },
+  
+  // Add this method to handle Flutterwave callback
+  handleFlutterwaveCallback: async (params) => {
+    const queryString = new URLSearchParams(params).toString();
+    return await apiClient.get(`/api/v1/wallet/flutterwave/callback/?${queryString}`);
+  },
 };

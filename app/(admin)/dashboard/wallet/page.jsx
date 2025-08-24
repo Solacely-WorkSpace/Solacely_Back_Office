@@ -56,7 +56,7 @@ export default function WalletPage() {
   const fetchWalletData = async () => {
     try {
       // Fetch wallet stats
-      const statsResponse = await walletAPI.getWalletStats();
+      const statsResponse = await walletAPI.getDetailedWalletStats();
       const stats = statsResponse.data;
       
       setWalletStats({

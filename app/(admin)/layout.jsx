@@ -283,7 +283,11 @@ export default function AdminLayout({ children }) {
 
           {/* Other Sidebar Items */}
           {sidebarItems.map((item) => {
-            const isActive = pathname === item.href && activeItem !== 'spaces';
+            // Check if we're in a profile settings page and this is the Customers item
+            const isProfileSettings = pathname.includes('/dashboard/customers/') && pathname.includes('/profile-settings');
+            const isCustomersItem = item.name === 'Customers';
+            const isActive = (pathname === item.href && activeItem !== 'spaces') || 
+                          (isProfileSettings && isCustomersItem);
             const iconSrc = isActive ? item.selectedIcon : item.icon;
             
             return (

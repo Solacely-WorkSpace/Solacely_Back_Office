@@ -7,6 +7,7 @@ import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { adminAPI } from "@/utils/api/admin";
 import { toast } from "sonner";
+import { usersAPI } from "@/utils/api/users";
 
 function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,16 +26,13 @@ function CustomersPage() {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await adminAPI.getAllUsers({
-        page: currentPage,
-        search: searchTerm,
-      });
+      const response = await usersAPI.getUsers();
 
-      // Add null check before accessing results
-      if (response && response.data) {
-        setCustomers(response.data.results || []);
-        setTotalPages(Math.ceil((response.data.count || 0) / 10)); // Assuming 10 items per page
-        setTotalCustomers(response.data.count || 0);
+      // Add null check before accessing response
+      if (response) {
+        setCustomers(response.results || []);
+        setTotalPages(Math.ceil((response.count || 0) / 10)); // Assuming 10 items per page
+        setTotalCustomers(response.count || 0);
       } else {
         setCustomers([]);
         setTotalPages(1);
@@ -86,9 +84,6 @@ function CustomersPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
-      </div>
 
       {/* Search Bar */}
       <div className="flex items-center space-x-4">
@@ -98,16 +93,10 @@ function CustomersPage() {
             placeholder="Search for customers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-9 text-sm border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+            className="pl-10 h-12 text-sm border-1 rounded-md border-gray-300 focus:border-purple-500 focus:ring-purple-500"
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
-        <Button
-          onClick={handleSearch}
-          className="bg-[#521282] hover:bg-purple-700 text-white"
-        >
-          Search
-        </Button>
       </div>
 
       {/* Table Card */}
@@ -116,8 +105,8 @@ function CustomersPage() {
           <div className="overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50">
-                  <th className="text-left py-3 px-4 w-12">
+                <tr className="border-b border-gray-200 bg-[#F8F7FE]">
+                  <th className="text-left py-4 px-4 w-12">
                     <input
                       type="checkbox"
                       onChange={(e) => handleSelectAll(e.target.checked)}
@@ -128,7 +117,7 @@ function CustomersPage() {
                       className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
                     />
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-left py-4 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
                       <span>Full Name</span>
                       <div className="flex flex-col">
@@ -137,7 +126,7 @@ function CustomersPage() {
                       </div>
                     </div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-left py-4 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
                       <span>Email</span>
                       <div className="flex flex-col">
@@ -146,7 +135,7 @@ function CustomersPage() {
                       </div>
                     </div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-left py-4 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
                       <span>Phone number</span>
                       <div className="flex flex-col">
@@ -155,7 +144,7 @@ function CustomersPage() {
                       </div>
                     </div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-left py-4 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
                       <span>Location</span>
                       <div className="flex flex-col">
@@ -164,16 +153,7 @@ function CustomersPage() {
                       </div>
                     </div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
-                    <div className="flex items-center space-x-1">
-                      <span>Status</span>
-                      <div className="flex flex-col">
-                        <ChevronUp className="w-3 h-3 text-gray-400" />
-                        <ChevronDown className="w-3 h-3 text-gray-400 -mt-1" />
-                      </div>
-                    </div>
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-left py-4 px-4 text-sm font-medium text-gray-700">
                     <div className="flex items-center space-x-1">
                       <span>Action</span>
                     </div>
@@ -192,7 +172,7 @@ function CustomersPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                            <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
                             <div className="h-4 w-32 bg-gray-200 rounded"></div>
                           </div>
                         </td>
@@ -206,16 +186,13 @@ function CustomersPage() {
                           <div className="h-4 w-24 bg-gray-200 rounded"></div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="h-4 w-16 bg-gray-200 rounded"></div>
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="h-8 w-16 bg-gray-200 rounded"></div>
                         </td>
                       </tr>
                     ))
                 ) : customers.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-6 text-center text-gray-500">
+                    <td colSpan="6" className="py-6 text-center text-gray-500">
                       No customers found
                     </td>
                   </tr>
@@ -237,12 +214,12 @@ function CustomersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
-                          <Avatar className="w-8 h-8">
+                          <Avatar className="w-12 h-12">
                             <AvatarImage
                               src={customer.profile_image}
                               alt={customer.full_name}
                             />
-                            <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
+                            <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
                               {customer.full_name
                                 ? customer.full_name
                                     .split(" ")
@@ -265,17 +242,6 @@ function CustomersPage() {
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {customer.location || "N/A"}
                       </td>
-                      <td className="py-3 px-4 text-sm">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            customer.account_status === "ACTIVE"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {customer.account_status || "INACTIVE"}
-                        </span>
-                      </td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
                           <Button
@@ -288,31 +254,6 @@ function CustomersPage() {
                           >
                             View
                           </Button>
-                          <Button
-                            size="sm"
-                            variant={
-                              customer.account_status === "ACTIVE"
-                                ? "destructive"
-                                : "outline"
-                            }
-                            className={`h-8 px-3 text-xs ${
-                              customer.account_status === "ACTIVE"
-                                ? ""
-                                : "border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300"
-                            }`}
-                            onClick={() =>
-                              handleUpdateUserStatus(
-                                customer.id,
-                                customer.account_status === "ACTIVE"
-                                  ? "INACTIVE"
-                                  : "ACTIVE"
-                              )
-                            }
-                          >
-                            {customer.account_status === "ACTIVE"
-                              ? "Deactivate"
-                              : "Activate"}
-                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -321,39 +262,39 @@ function CustomersPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/30">
-            <div className="text-sm text-gray-600">
-              Showing {customers.length > 0 ? (currentPage - 1) * 10 + 1 : 0} to{" "}
-              {Math.min(currentPage * 10, totalCustomers)} of {totalCustomers}{" "}
-              results
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-gray-50"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-gray-50"
-                disabled={currentPage >= totalPages}
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/30">
+        <div className="text-sm text-gray-600">
+          Showing {customers.length > 0 ? (currentPage - 1) * 10 + 1 : 0} to{" "}
+          {Math.min(currentPage * 10, totalCustomers)} of {totalCustomers}{" "}
+          results
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-gray-50"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-gray-50"
+            disabled={currentPage >= totalPages}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -13,28 +13,69 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Eye, EyeOff, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { adminAPI } from "@/utils/api/admin";
+import { toast } from "react-hot-toast";
 
 function AddNewUser() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    fullName: "",
-    companyPosition: "",
+    full_name: "",
+    company_position: "",
     password: "",
-    role: "",
-    sendEmail: false,
+    password_confirm: "",
+    role: "user",
+    send_email: false,
+    phone_number: "",
+    location: "",
   });
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form data:", formData);
+    setIsLoading(true);
+
+    try {
+      // Create form data for multipart/form-data request
+      const submitData = new FormData();
+      
+      // Add all form fields
+      Object.keys(formData).forEach(key => {
+        if (key !== 'password_confirm') { // Don't send password_confirm to backend
+          submitData.append(key, formData[key]);
+        }
+      });
+      
+      // Add profile image if exists
+      if (profileImage) {
+        submitData.append('profile_image', profileImage);
+      }
+
+      // Send request to create user
+      const response = await adminAPI.createUser(submitData);
+      
+      toast.success("User created successfully!");
+      router.push("/dashboard/users");
+    } catch (error) {
+      console.error("Error creating user:", error);
+      toast.error(error.response?.data?.message || "Failed to create user");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -102,38 +143,81 @@ function AddNewUser() {
               {/* Full Name */}
               <div className="space-y-2">
                 <Label
-                  htmlFor="fullName"
+                  htmlFor="full_name"
                   className="text-sm font-medium text-gray-700"
                 >
                   FULL NAME
                 </Label>
                 <Input
-                  id="fullName"
-                  placeholder="Enter first name"
-                  value={formData.fullName}
+                  id="full_name"
+                  placeholder="Enter full name"
+                  value={formData.full_name}
                   onChange={(e) =>
-                    handleInputChange("fullName", e.target.value)
+                    handleInputChange("full_name", e.target.value)
                   }
                   className="h-12"
+                  required
                 />
               </div>
 
               {/* Company Position */}
               <div className="space-y-2">
                 <Label
-                  htmlFor="companyPosition"
+                  htmlFor="company_position"
                   className="text-sm font-medium text-gray-700"
                 >
                   COMPANY POSITION
                 </Label>
                 <Input
-                  id="companyPosition"
+                  id="company_position"
                   placeholder="Enter position"
-                  value={formData.companyPosition}
+                  value={formData.company_position}
                   onChange={(e) =>
-                    handleInputChange("companyPosition", e.target.value)
+                    handleInputChange("company_position", e.target.value)
                   }
                   className="h-12"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Phone Number */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="phone_number"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  PHONE NUMBER
+                </Label>
+                <Input
+                  id="phone_number"
+                  placeholder="Enter phone number"
+                  value={formData.phone_number}
+                  onChange={(e) =>
+                    handleInputChange("phone_number", e.target.value)
+                  }
+                  className="h-12"
+                  required
+                />
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="location"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  LOCATION
+                </Label>
+                <Input
+                  id="location"
+                  placeholder="Enter location"
+                  value={formData.location}
+                  onChange={(e) =>
+                    handleInputChange("location", e.target.value)
+                  }
+                  className="h-12"
+                  required
                 />
               </div>
             </div>
@@ -157,6 +241,7 @@ function AddNewUser() {
                       handleInputChange("password", e.target.value)
                     }
                     className="h-12 pr-10"
+                    required
                   />
                   <button
                     type="button"
@@ -172,6 +257,29 @@ function AddNewUser() {
                 </div>
               </div>
 
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password_confirm"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  CONFIRM PASSWORD
+                </Label>
+                <Input
+                  id="password_confirm"
+                  type="password"
+                  placeholder="Confirm password"
+                  value={formData.password_confirm}
+                  onChange={(e) =>
+                    handleInputChange("password_confirm", e.target.value)
+                  }
+                  className="h-12"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Role */}
               <div className="space-y-2">
                 <Label
@@ -185,7 +293,7 @@ function AddNewUser() {
                   onValueChange={(value) => handleInputChange("role", value)}
                 >
                   <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Super Admin" />
+                    <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="super-admin">Super Admin</SelectItem>
@@ -203,19 +311,28 @@ function AddNewUser() {
                 Profile Image
               </Label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Upload className="h-6 w-6 text-gray-400" />
+                <input
+                  type="file"
+                  id="profile_image"
+                  accept="image/jpeg,image/png,image/jpg"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <label htmlFor="profile_image" className="cursor-pointer">
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Upload className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        {profileImage ? profileImage.name : "Drop your image here, or browse"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Supports JPG, PNG, and JPEG
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Drop your image here, or browse
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Supports JPG, PNG, and JPEG
-                    </p>
-                  </div>
-                </div>
+                </label>
               </div>
             </div>
 
@@ -223,14 +340,14 @@ function AddNewUser() {
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                id="sendEmail"
-                checked={formData.sendEmail}
+                id="send_email"
+                checked={formData.send_email}
                 onChange={(e) =>
-                  handleInputChange("sendEmail", e.target.checked)
+                  handleInputChange("send_email", e.target.checked)
                 }
                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
               />
-              <Label htmlFor="sendEmail" className="text-sm text-gray-700">
+              <Label htmlFor="send_email" className="text-sm text-gray-700">
                 Send the new user an email about their account.
               </Label>
             </div>
@@ -240,8 +357,9 @@ function AddNewUser() {
               <Button
                 type="submit"
                 className="bg-[#521282] hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium"
+                disabled={isLoading}
               >
-                Add New User
+                {isLoading ? "Creating User..." : "Add New User"}
               </Button>
             </div>
           </form>

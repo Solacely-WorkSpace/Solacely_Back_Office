@@ -51,4 +51,18 @@ export const listingsAPI = {
   
   deleteListingImage: (listingId, imageId) => 
     apiClient.delete(`/api/v1/apart/listings/${listingId}/images/${imageId}/`),
+  
+  // Add these methods to connect with RepairViewSet
+  getRepairs: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.get(`/api/v1/apart/repairs/${queryString ? `?${queryString}` : ''}`);
+  },
+  
+  getRepair: (id) => apiClient.get(`/api/v1/apart/repairs/${id}/`),
+  
+  createRepair: (repairData) => apiClient.post('/api/v1/apart/repairs/', repairData),
+  
+  updateRepair: (id, repairData) => apiClient.put(`/api/v1/apart/repairs/${id}/`, repairData),
+  
+  deleteRepair: (id) => apiClient.delete(`/api/v1/apart/repairs/${id}/`),
 };

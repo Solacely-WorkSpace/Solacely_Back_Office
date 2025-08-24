@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,16 +8,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Upload, Image } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { adminAPI } from '@/utils/api/admin';
+import { useRouter } from 'next/navigation';
 
 function AddNewAgency() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     rcNumber: '',
     email: '',
     phoneNumber: '',
     location: '',
-    address: ''
+    address: '',
+    companyLogo: null,
+    companyDocument: null
   });
+  
+  // Refs for file inputs
+  const companyLogoInputRef = useRef(null);
+  const companyDocumentInputRef = useRef(null);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -26,13 +36,67 @@ function AddNewAgency() {
     }));
   };
 
+  const handleFileChange = (field, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: file
+      }));
+      toast.success(`${field === 'companyLogo' ? 'Company logo' : 'Company document'} selected`);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.companyName || !formData.email || !formData.phoneNumber || !formData.location) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
     try {
-      // Add API call here
+      setIsLoading(true);
+      
+      // Prepare data for API
+      const partnerData = {
+        partner_name: formData.companyName,
+        full_name: formData.companyName,
+        phone_number: formData.phoneNumber,
+        email: formData.email,
+        business_type: 'Agency',
+        location_region: formData.location,
+        company_website: null
+      };
+      
+      // Create FormData for file uploads if needed
+      const formDataWithFiles = new FormData();
+      
+      // Add JSON data
+      Object.keys(partnerData).forEach(key => {
+        formDataWithFiles.append(key, partnerData[key]);
+      });
+      
+      // Add files if they exist
+      if (formData.companyLogo) {
+        formDataWithFiles.append('profile_image', formData.companyLogo);
+      }
+      
+      if (formData.companyDocument) {
+        formDataWithFiles.append('work_document', formData.companyDocument);
+      }
+      
+      // Call API to create partner
+      const response = await adminAPI.createPartner(formDataWithFiles);
+      
       toast.success('Agency added successfully!');
+      router.push('/dashboard/partners');
     } catch (error) {
-      toast.error('Failed to add agency');
+      console.error('Error adding agency:', error);
+      toast.error(error.response?.data?.message || 'Failed to add agency');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -165,13 +229,25 @@ function AddNewAgency() {
               <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
                 UPLOAD IMAGE
               </Label>
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#521282] transition-colors">
+              <div 
+                className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#521282] transition-colors cursor-pointer"
+                onClick={() => companyLogoInputRef.current?.click()}
+              >
+                <input 
+                  type="file" 
+                  ref={companyLogoInputRef}
+                  className="hidden" 
+                  accept="image/jpeg,image/png,image/jpg"
+                  onChange={(e) => handleFileChange('companyLogo', e)}
+                />
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     <Image className="h-6 w-6 text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Drop your image here, or browse</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formData.companyLogo ? formData.companyLogo.name : 'Drop your image here, or browse'}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">Supports JPG, PNG, and JPEG</p>
                   </div>
                 </div>
@@ -183,13 +259,25 @@ function AddNewAgency() {
               <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
                 UPLOAD WORK DOCUMENT
               </Label>
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#521282] transition-colors">
+              <div 
+                className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#521282] transition-colors cursor-pointer"
+                onClick={() => companyDocumentInputRef.current?.click()}
+              >
+                <input 
+                  type="file" 
+                  ref={companyDocumentInputRef}
+                  className="hidden" 
+                  accept="application/pdf,image/jpeg,image/jpg"
+                  onChange={(e) => handleFileChange('companyDocument', e)}
+                />
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     <Upload className="h-6 w-6 text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Drop your document here, or browse</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formData.companyDocument ? formData.companyDocument.name : 'Drop your document here, or browse'}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">Supports PDF and JPG</p>
                   </div>
                 </div>

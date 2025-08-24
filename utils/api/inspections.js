@@ -61,5 +61,15 @@ export const inspectionsAPI = {
 
   createReview: async (reviewData) => {
     return await apiClient.post('/api/v1/inspections/reviews/', reviewData);
-  }
+  },
+  // Add this method to connect with InspectionCreditPurchaseView
+  purchaseCredit: async (creditData) => {
+    return await apiClient.post('/api/v1/inspections/credits/purchase/', creditData);
+  },
+
+  // Add this method to handle Flutterwave callback for inspection credits
+  handleFlutterwaveCallback: async (params) => {
+    const queryString = new URLSearchParams(params).toString();
+    return await apiClient.get(`/api/v1/inspections/flutterwave/callback/?${queryString}`);
+  },
 };
