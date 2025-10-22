@@ -2,22 +2,18 @@
 import React from 'react'
 import { LoadScript } from '@react-google-maps/api'
 
-
 function Provider({ children }) {
+  // Ensure Google Maps API key is available
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACE_API_KEY || '';
+
   return (
-    <div>
-      <LoadScript
-      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACE_API_KEY}
+    <LoadScript
+      googleMapsApiKey={googleMapsApiKey}
       libraries={['places']}
-      >
-    
-      <div >
-        {children}
-      </div>
-  
-      </LoadScript>
-    </div>
-  )
+    >
+      {children}
+    </LoadScript>
+  );
 }
 
-export default Provider
+export default Provider;

@@ -1,27 +1,21 @@
-
 "use client";
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
-  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     if (!loading) {
-      if (isAuthenticated) {
-        router.push('/dashboard');
-      } else {
-        router.push('/sign-in');
-      }
+      router.push(isAuthenticated ? '/dashboard' : '/sign-in');
     }
   }, [isAuthenticated, loading, router]);
 
-  // Return a loading state or nothing while checking authentication
   return (
     <main className="flex min-h-screen items-center justify-center">
-      {loading && <p>Loading...</p>}
+      <div className="text-center">Loading...</div>
     </main>
   );
 }
