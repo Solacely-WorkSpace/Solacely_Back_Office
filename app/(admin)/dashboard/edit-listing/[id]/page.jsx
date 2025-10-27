@@ -104,28 +104,21 @@ function EditListing({ params }) {
 
   const fetchAgents = async () => {
     try {
-      const response = await usersAPI.getUsers();
-      const agentsList = response.results?.filter(user => user.is_agent) || [];
-      
+      const response = await usersAPI.getUsers({ is_agent: true });
+      const payload = response.results || response.data || response;
+      const agentsList = Array.isArray(payload)
+        ? payload.filter((user) => user.is_agent)
+        : [];
+
+      setAgents(agentsList);
+
       if (agentsList.length === 0) {
-        const dummyAgents = [
-          { id: 'agent1', email: 'akinrodoluseun12@gmail.com', full_name: 'John Doe' },
-          { id: 'agent2', email: 'jane.smith@solacely.com', full_name: 'Jane Smith' },
-          { id: 'agent3', email: 'michael.brown@solacely.com', full_name: 'Michael Brown' },
-          { id: 'agent4', email: 'sarah.wilson@solacely.com', full_name: 'Sarah Wilson' },
-          { id: 'agent5', email: 'david.johnson@solacely.com', full_name: 'David Johnson' }
-        ];
-        setAgents(dummyAgents);
-      } else {
-        setAgents(agentsList);
+        toast.warning('No agents available. Create an agent account before assigning listings.');
       }
     } catch (error) {
       console.error('Error fetching agents:', error);
-      const dummyAgents = [
-        { id: 'agent1', email: 'alazarashebir01@gmail.com', full_name: 'John Doe' },
-        { id: 'agent2', email: 'jane.smith@solacely.com', full_name: 'Jane Smith' }
-      ];
-      setAgents(dummyAgents);
+      setAgents([]);
+      toast.error('Failed to load agents. Please try again later.');
     }
   };
 

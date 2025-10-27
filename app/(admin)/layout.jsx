@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   ChevronDown,
@@ -45,6 +45,7 @@ import {
   Logo, UserMgt,
   Logout as LogoutIcon
 } from '@/assets/icons';
+import { adminAPI } from '@/utils/api/admin';
 
 const spaceItems = [
   { name: 'Apartment', href: '/dashboard/spaces/apartment' },
@@ -92,70 +93,168 @@ const sidebarItems = [
   },
 ];
 
+const normalizeActivities = (payload) => {
+  if (!payload) {
+    return [];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload.results)) {
+    return payload.results;
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  return [];
+};
+
+const formatRelativeTime = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  const target = new Date(value);
+
+  if (Number.isNaN(target.getTime())) {
+    return '';
+  }
+
+  if (typeof Intl === 'undefined' || typeof Intl.RelativeTimeFormat === 'undefined') {
+    return target.toLocaleString();
+  }
+
+  const now = new Date();
+  const diffSeconds = Math.round((target.getTime() - now.getTime()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+  const divisions = [
+    { amount: 60, unit: 'second' },
+    { amount: 60, unit: 'minute' },
+    { amount: 24, unit: 'hour' },
+    { amount: 7, unit: 'day' },
+    { amount: 4.34524, unit: 'week' },
+    { amount: 12, unit: 'month' },
+  ];
+
+  let duration = diffSeconds;
+  let unit = 'second';
+
+  for (const division of divisions) {
+    if (Math.abs(duration) < division.amount) {
+      break;
+    }
+
+    duration /= division.amount;
+    unit = division.unit;
+  }
+
+  const formatted = rtf.format(Math.round(duration), unit);
+
+  if (formatted === 'in 0 seconds' || formatted === '0 seconds ago') {
+    return 'just now';
+  }
+
+  return formatted;
+};
+
+const getNotificationPresentation = (action = '') => {
+  const normalized = action.toLowerCase();
+
+  if (normalized.includes('listing')) {
+    return { icon: Building2, color: 'text-blue-600' };
+  }
+
+  if (normalized.includes('payment') || normalized.includes('wallet') || normalized.includes('transaction')) {
+    return { icon: CreditCard, color: 'text-green-600' };
+  }
+
+  if (normalized.includes('verify') || normalized.includes('profile') || normalized.includes('user')) {
+    return { icon: UserCheck, color: 'text-purple-600' };
+  }
+
+  if (normalized.includes('approved') || normalized.includes('approval')) {
+    return { icon: CheckCircle, color: 'text-green-600' };
+  }
+
+  return { icon: AlertCircle, color: 'text-gray-500' };
+};
+
+const mapActivityToNotification = (activity) => {
+  const { icon, color } = getNotificationPresentation(activity?.action || '');
+  const message =
+    activity?.meta?.description ||
+    activity?.meta?.detail ||
+    activity?.meta?.message ||
+    activity?.user_email ||
+    'No additional context provided.';
+
+  return {
+    id: activity?.id ?? `${activity?.action}-${activity?.timestamp}`,
+    title: activity?.action || 'Activity',
+    message,
+    time: formatRelativeTime(activity?.timestamp),
+    exactTime: activity?.timestamp ? new Date(activity.timestamp).toLocaleString() : '',
+    read: Boolean(activity?.read || activity?.is_read),
+    icon,
+    color,
+  };
+};
+
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [spacesOpen, setSpacesOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState(null);
 
   const isSpaceActive = spaceItems.some(item => pathname === item.href);
 
-  // Dummy notification data
-  const notifications = [
-    {
-      id: 1,
-      type: 'new_listing',
-      title: 'New Property Listed',
-      message: 'A new apartment has been added in Victoria Island',
-      time: '2 minutes ago',
-      read: false,
-      icon: Building2,
-      color: 'text-blue-600'
-    },
-    {
-      id: 2,
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'Rent payment of ₦2,500,000 received from John Doe',
-      time: '1 hour ago',
-      read: false,
-      icon: CreditCard,
-      color: 'text-green-600'
-    },
-    {
-      id: 3,
-      type: 'user_verification',
-      title: 'User Verification',
-      message: 'Sarah Johnson has completed profile verification',
-      time: '3 hours ago',
-      read: true,
-      icon: UserCheck,
-      color: 'text-purple-600'
-    },
-    {
-      id: 4,
-      type: 'system',
-      title: 'System Update',
-      message: 'Platform maintenance scheduled for tonight',
-      time: '1 day ago',
-      read: true,
-      icon: AlertCircle,
-      color: 'text-orange-600'
-    },
-    {
-      id: 5,
-      type: 'approval',
-      title: 'Listing Approved',
-      message: 'Property listing in Lekki has been approved',
-      time: '2 days ago',
-      read: true,
-      icon: CheckCircle,
-      color: 'text-green-600'
-    }
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+    const loadNotifications = async () => {
+      setNotificationsLoading(true);
+      setNotificationsError(null);
+
+      try {
+        const response = await adminAPI.getUserActivities({ limit: 10 });
+        const activities = normalizeActivities(response).map(mapActivityToNotification);
+
+        if (isMounted) {
+          setNotifications(activities);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+        if (isMounted) {
+          setNotifications([]);
+          setNotificationsError('Unable to load notifications right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setNotificationsLoading(false);
+        }
+      }
+    };
+
+    loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const unreadCount = useMemo(
+    () => notifications.filter(notification => !notification.read).length,
+    [notifications]
+  );
 
   // Close spaces dropdown when navigating to other pages
   const handleNavClick = () => {
@@ -362,40 +461,60 @@ export default function AdminLayout({ children }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
+                    {notificationsLoading ? (
+                      <div className="space-y-3 p-4">
+                        {[0, 1, 2].map((item) => (
+                          <div
+                            key={`notifications-skeleton-${item}`}
+                            className="h-16 rounded-lg bg-gray-100 animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : notificationsError ? (
+                      <div className="p-4 text-center text-sm text-red-600">
+                        {notificationsError}
+                      </div>
+                    ) : notifications.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 text-sm">
                         No notifications
                       </div>
                     ) : (
                       notifications.map((notification) => {
                         const IconComponent = notification.icon;
+
                         return (
-                          <DropdownMenuItem 
-                            key={notification.id} 
+                          <DropdownMenuItem
+                            key={notification.id}
                             className={`p-3 cursor-pointer hover:bg-gray-50 ${
-                              !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
+                              !notification.read
+                                ? 'bg-blue-50 border-l-2 border-l-blue-500'
+                                : ''
                             }`}
                           >
-                            <div className="flex items-start space-x-3 w-full">
-                              <div className={`p-2 rounded-full bg-gray-100 ${notification.color}`}>
+                            <div className="flex w-full items-start space-x-3">
+                              <div
+                                className={`p-2 rounded-full bg-gray-100 ${notification.color}`}
+                              >
                                 <IconComponent className="h-4 w-4" />
                               </div>
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between">
-                                  <p className={`text-sm font-medium text-gray-900 ${
-                                    !notification.read ? 'font-semibold' : ''
-                                  }`}>
+                                  <p
+                                    className={`text-sm font-medium text-gray-900 ${
+                                      !notification.read ? 'font-semibold' : ''
+                                    }`}
+                                  >
                                     {notification.title}
                                   </p>
                                   {!notification.read && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
                                   )}
                                 </div>
-                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                <p className="mt-1 line-clamp-2 text-xs text-gray-600">
                                   {notification.message}
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {notification.time}
+                                <p className="mt-1 text-xs text-gray-400">
+                                  {notification.time || notification.exactTime}
                                 </p>
                               </div>
                             </div>

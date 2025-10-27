@@ -87,83 +87,21 @@ function AddNewListing() {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const response = await usersAPI.getUsers();
-        // Filter for users with is_agent=true
-        const agentsList =
-          response.results?.filter((user) => user.is_agent) || [];
+        const response = await usersAPI.getUsers({ is_agent: true });
+        const payload = response.results || response.data || response;
+        const agentsList = Array.isArray(payload)
+          ? payload.filter((user) => user.is_agent)
+          : [];
 
-        // If no agents found or API fails, use dummy data
+        setAgents(agentsList);
+
         if (agentsList.length === 0) {
-          const dummyAgents = [
-            {
-              id: "agent1",
-              email: "akinrodoluseun12@gmail.com",
-              full_name: "John Doe",
-            },
-            {
-              id: "agent2",
-              email: "jane.smith@solacely.com",
-              full_name: "Jane Smith",
-            },
-            {
-              id: "agent3",
-              email: "michael.brown@solacely.com",
-              full_name: "Michael Brown",
-            },
-            {
-              id: "agent4",
-              email: "sarah.wilson@solacely.com",
-              full_name: "Sarah Wilson",
-            },
-            {
-              id: "agent5",
-              email: "david.johnson@solacely.com",
-              full_name: "David Johnson",
-            },
-          ];
-          setAgents(dummyAgents);
-
-          // Not setting default agent email anymore
-        } else {
-          setAgents(agentsList);
-
-          // Not setting default agent email anymore
+          toast.warning("No agents found. Create an agent account to assign listings.");
         }
       } catch (error) {
         console.error("Error fetching agents:", error);
-        toast.error("Failed to load agents, using dummy data");
-
-        // Use dummy data on error
-        const dummyAgents = [
-          {
-            id: "agent1",
-            email: "alazarashebir01@gmail.com",
-            full_name: "John Doe",
-          },
-          {
-            id: "agent2",
-            email: "jane.smith@solacely.com",
-            full_name: "Jane Smith",
-          },
-          {
-            id: "agent3",
-            email: "michael.brown@solacely.com",
-            full_name: "Michael Brown",
-          },
-          {
-            id: "agent4",
-            email: "sarah.wilson@solacely.com",
-            full_name: "Sarah Wilson",
-          },
-          {
-            id: "agent5",
-            email: "david.johnson@solacely.com",
-            full_name: "David Johnson",
-          },
-        ];
-        setAgents(dummyAgents);
-
-        // Not setting default agent email anymore
+        setAgents([]);
+        toast.error("Failed to load agents. Please try again later.");
       }
     };
 

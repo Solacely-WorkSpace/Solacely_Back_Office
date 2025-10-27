@@ -14,6 +14,7 @@ function PropertyChart() {
     new Date().getFullYear().toString()
   );
   const [totalListings, setTotalListings] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchLocationData();
@@ -64,18 +65,13 @@ function PropertyChart() {
         const total = listings.length;
         setTotalListings(total);
         setData(chartData);
+        setError(null);
       }
     } catch (error) {
       console.error("Error in fetchLocationData:", error);
-      // Fallback data if API fails
-      const fallbackData = [
-        { name: "Lagos", value: 2500, color: colors[0] },
-        { name: "Kano", value: 2200, color: colors[1] },
-        { name: "Abuja", value: 1300, color: colors[2] },
-        { name: "Kaduna", value: 1800, color: colors[3] },
-      ];
-      setData(fallbackData);
-      setTotalListings(7800);
+      setData([]);
+      setTotalListings(0);
+      setError("We couldn't load location insights right now. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -168,6 +164,32 @@ function PropertyChart() {
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto">
+        <CardHeader className="flex justify-center items-center pb-2">
+          <div className="text-lg font-medium">{selectedYear}</div>
+        </CardHeader>
+        <CardContent className="flex h-full flex-col items-center justify-center p-6 text-center">
+          <p className="text-sm text-red-600">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!loading && data.length === 0) {
+    return (
+      <Card className="overflow-hidden rounded-xl shadow-sm max-w-[380px] h-[420px] mx-auto">
+        <CardHeader className="flex justify-center items-center pb-2">
+          <div className="text-lg font-medium">{selectedYear}</div>
+        </CardHeader>
+        <CardContent className="flex h-full flex-col items-center justify-center p-6 text-center">
+          <p className="text-sm text-gray-500">No location data available for the selected period.</p>
         </CardContent>
       </Card>
     );

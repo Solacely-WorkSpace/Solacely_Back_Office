@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { listingsAPI } from "@/utils/api/listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, BedDouble, Bath, Home, ChevronRight } from "lucide-react";
@@ -8,47 +8,8 @@ import Image from "next/image";
 function RecentListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
-
-  // Dummy data for fallback
-  const dummyListings = [
-    {
-      id: "dummy-1",
-      title: "Luxury 3 Bedroom Apartment",
-      location: "Lagos, Lekki Phase 1",
-      number_of_bedrooms: 3,
-      number_of_bathrooms: 2,
-      area_size_sqm: 120,
-      price: 25000000,
-      status: "available",
-      listing_type: "Sale",
-      images: [{ original_image_url: "/icons/Logo.svg" }],
-    },
-    {
-      id: "dummy-2",
-      title: "Modern 2 Bedroom Flat",
-      location: "Abuja, Wuse 2",
-      number_of_bedrooms: 2,
-      number_of_bathrooms: 2,
-      area_size_sqm: 85,
-      price: 18000000,
-      status: "available",
-      listing_type: "Rent",
-      images: [{ original_image_url: "/icons/Logo.svg" }],
-    },
-    {
-      id: "dummy-3",
-      title: "Spacious 4 Bedroom Duplex",
-      location: "Port Harcourt, GRA",
-      number_of_bedrooms: 4,
-      number_of_bathrooms: 3,
-      area_size_sqm: 200,
-      price: 45000000,
-      status: "available",
-      listing_type: "Sale",
-      images: [{ original_image_url: "/icons/Logo.svg" }],
-    },
-  ];
 
   useEffect(() => {
     fetchRecentListings();
@@ -62,25 +23,14 @@ function RecentListings() {
         ordering: "-created_at",
       });
       const data = response.results || response;
-      console.log("API Response:", response);
-      console.log("Listings data:", data);
-      console.log("Number of listings:", data?.length);
 
-      // Ensure we only take the first 3 listings
       const limitedListings = Array.isArray(data) ? data.slice(0, 3) : [];
-
-      // If no listings were returned, use dummy data
-      if (limitedListings.length === 0) {
-        console.log("No listings returned from API, using dummy data");
-        setListings(dummyListings);
-      } else {
-        setListings(limitedListings);
-      }
+      setListings(limitedListings);
+      setError(null);
     } catch (error) {
       console.error("Error fetching recent listings:", error);
-      // Use dummy data when API call fails
-      console.log("API call failed, using dummy data");
-      setListings(dummyListings);
+      setListings([]);
+      setError("Failed to load recent listings. Please try again later.");
     }
     setLoading(false);
   };
@@ -177,6 +127,12 @@ function RecentListings() {
                 className="h-32 bg-gray-100 animate-pulse rounded-lg"
               ></div>
             ))}
+          </div>
+        ) : error ? (
+          <div className="py-10 text-center text-sm text-red-600">{error}</div>
+        ) : listings.length === 0 ? (
+          <div className="py-10 text-center text-sm text-gray-500">
+            No recent listings available.
           </div>
         ) : (
           <div>
